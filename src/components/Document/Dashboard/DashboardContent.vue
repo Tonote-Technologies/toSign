@@ -171,7 +171,7 @@
                                   <span>View</span>
                                 </a>
 
-                                <template v-if="doc.entry_point == 'Docs' && doc.allowed_seal_per_unit < 0">
+                                <template v-if="doc.entry_point == 'Docs' && doc.allowed_seal_per_unit == null">
                                   <a class="dropdown-item" role="button" @click="
                                     getDocument({
                                       id: doc.id,
@@ -239,7 +239,7 @@
                     &larr; Back
                   </button>
 
-                  <template v-if="userDocument.entry_point == 'Docs' && userDocument.is_the_owner_of_document">
+                  <template v-if="userDocument.entry_point == 'Docs' && userDocument.allowed_seal_per_unit == null">
                     <router-link :to="{ name: 'document.edit', params: { document_id: editId } }"
                       class="btn btn-sm btn-primary">Edit
                     </router-link>
