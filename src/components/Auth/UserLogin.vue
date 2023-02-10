@@ -3,7 +3,7 @@
     <LoginUsers />
   </div>
   <div v-else>
-    <div v-if="isLoading" class="grid">
+    <div class="grid">
       <PreLoader />
     </div>
   </div>
@@ -28,30 +28,36 @@ const uri = ref("");
 const token = ref("");
 const status = ref("");
 const documentId = ref("");
-const environment = ref('')
-const isLoading = ref(true)
+const environment = ref("");
+const edit = ref("");
 
 onMounted(() => {
-  setTimeout(() => {
-    isLoading.value = false
-  }, 1000);
-
   uri.value = route.currentRoute.value.query;
   token.value = uri.value.qt;
   documentId.value = uri.value.di;
+  edit.value = uri.value.ed ?? 0;
 
   dashboard.value.setToken(token.value);
 
-  (uri.value.status != undefined || uri.value.status != "") ? status.value = uri.value.status : status.value = "";
+  if (uri.value.status != undefined || uri.value.status != "") {
+    status.value = uri.value.status;
+  } else {
+    status.value = "";
+  }
 
-  environment.value = process.env.NODE_ENV
+  environment.value = process.env.NODE_ENV;
 
-  if (environment.value == 'development') return
+  if (environment.value == "development") return;
 
   if (token.value == undefined)
-    return (window.location.href = process.env.VUE_APP_URL_WEBSITE);
+    return (window.location.href = process.env.VUE_APP_URL_AUTH_LIVE);
 
-  setAuthentication({ token: token.value, status: status.value, documentId: documentId.value });
+  setAuthentication({
+    token: token.value,
+    status: status.value,
+    documentId: documentId.value,
+    edit: edit.value,
+  });
 });
 </script>
 

@@ -34,7 +34,7 @@
           <a class="nav-link dropdown-toggle dropdown-user-link" id="dropdown-user" href="#" data-bs-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
             <div class="user-nav d-sm-flex d-none">
-              <span class="user-name fw-bolder">{{ fullName }}</span>
+              <span class="user-name fw-bolder text-capitalize">{{ fullName }}</span>
               <span class="user-status text-capitalize">{{ plan }} plan</span>
             </div>
             <span class="avatar">
@@ -69,7 +69,7 @@
                   </div>
                 </template>
               </span>
-              <h5>{{ fullName }}</h5>
+              <h5 class="text-capitalize">{{ fullName }}</h5>
               <span>{{ profile?.email }}</span>
             </div>
 
@@ -93,7 +93,7 @@
                 </template>
               </span>
               <div class="ms-1">
-                <h5 class="mb-0">{{ fullName }}</h5>
+                <h5 class="mb-0 text-capitalize">{{ fullName }}</h5>
                 <span>{{ plan }}</span> plan
               </div>
             </div>

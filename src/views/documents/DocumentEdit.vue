@@ -1,5 +1,5 @@
 <template>
-  <div class="card rounded-0 mb-0 p-1 d-lg-none d-sm-block d-md-block custom-position">
+  <div v-if="role != 'Viewer'" class="card rounded-0 mb-0 p-1 d-lg-none d-sm-block d-md-block custom-position">
     <ul class="nav d-flex justify-content-between align-items-center" v-show="hasRole">
       <!-- signature tool  -->
       <li class="nav-item d-none">
@@ -28,25 +28,22 @@
         <div class="btn-group">
           <button type="button" class="extra__button waves-effect waves-float waves-light" data-bs-toggle="dropdown"
             aria-expanded="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"
-              stroke-linecap="round" stroke-linejoin="round" class="css-i6dzq1">
-              <circle cx="12" cy="12" r="1"></circle>
-              <circle cx="12" cy="5" r="1"></circle>
-              <circle cx="12" cy="19" r="1"></circle>
-            </svg>
+            <VerticalEllipsis />
           </button>
           <div class="dropdown-menu dropdown-menu-end" data-popper-placement="bottom-start">
             <!-- <div class="dropdown-divider"></div> -->
-            <a class="dropdown-item btn d-flex align-items-center" role="button" @click="addParticipantModal = true">
-              <Icon icon="akar-icons:plus" class="me-1" />
-              Add participants
-            </a>
+            <template v-if="userDocument.is_the_owner_of_document === true">
+              <a class="dropdown-item btn d-flex align-items-center" role="button" @click="addParticipantModal = true">
+                <Icon icon="akar-icons:plus" class="me-1" />
+                Add participants
+              </a>
+            </template>
 
             <a class="dropdown-item btn d-flex align-items-center" role="button" @click="editSignerModal = true">
               <Icon icon="ep:view" class="me-1" />
-              Manage signers
+              View all signers
             </a>
-            <a class="dropdown-item btn d-flex align-items-center" role="button" @click="exportPDF">
+            <a class="dropdown-item btn d-flex align-items-center" role="button" @click="exportHTMLToPDF">
               <Icon icon="bx:download" class="me-1" />
               Download
             </a>
@@ -54,22 +51,31 @@
             <div class="dropdown-divider"></div>
 
             <a @click="affixModal = true" class="dropdown-item" role="button" id="viewSignature">My Signature</a>
+
+            <template v-if="plan == 'Business'">
+              <a class="dropdown-item" role="button" @click="sealModal = true">My Seal</a>
+              <a class="dropdown-item" role="button" @click="stampModal = true">My Stamp</a>
+            </template>
           </div>
         </div>
       </li>
       <!-- other buttons  -->
       <li class="nav-item border-0">
-        <button class="btn btn-sm btn-primary me-1" @click="doneModal = true">
-          Finish
+        <button class="btn btn-sm btn-primary" @click="doneModal = true">
+          <template v-if="userDocument.is_the_owner_of_document === true"> Finish </template>
+          <template v-else> Submit </template>
         </button>
 
-        <button class="btn btn-sm btn-primary" @click="createModal = true">Share</button>
+        <button class="btn btn-sm btn-primary ms-1" @click="emailModal = true"
+          v-if="userDocument.is_the_owner_of_document === true">
+          Share
+        </button>
       </li>
     </ul>
   </div>
 
   <nav class="header-navbar navbar navbar-expand-lg floating-nav navbar-shadow container-xxl" style="z-index: 102">
-    <div class="navbar-container d-flex justify-content-between content">
+    <div class="navbar-container d-flex content">
       <div class="bookmark-wrapper d-flex align-items-center">
         <ul class="nav navbar-nav d-xl-none">
           <li class="nav-item d-none">
@@ -82,52 +88,67 @@
               </svg></a>
           </li>
         </ul>
-        <ul class="nav navbar-nav bookmark-icons" v-show="hasRole">
-          <li class="nav-item d-none d-sm-block">
-            <div class="btn-group">
-              <button type="button" class="btn btn-primary btn-sm waves-effect waves-float waves-light">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  class="feather feather-settings spinner">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                  </path>
-                </svg>
-                Signature tools
-              </button>
-              <button type="button"
-                class="btn btn-outline-primary btn-sm dropdown-toggle dropdown-toggle-split waves-effect waves-float waves-light"
-                data-bs-toggle="dropdown" aria-expanded="true">
-                <span class="visually-hidden"></span>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" data-popper-placement="bottom-start">
-                <a @click="affixModal = true" class="dropdown-item" href="#" id="viewSignature">My Signature</a>
+        <template v-if="role != 'Viewer'">
+          <ul class="nav navbar-nav bookmark-icons" v-show="hasRole">
+            <li class="nav-item d-none d-sm-block">
+              <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-sm waves-effect waves-float waves-light">
+                  <SettingIcon />
+                  Signature tools
+                </button>
+                <button type="button"
+                  class="btn btn-outline-primary btn-sm dropdown-toggle dropdown-toggle-split waves-effect waves-float waves-light"
+                  data-bs-toggle="dropdown" aria-expanded="true">
+                  <span class="visually-hidden"></span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" data-popper-placement="bottom-start">
+                  <a @click="affixModal = true" class="dropdown-item" href="#" id="viewSignature">My Signature</a>
+                  <template v-if="plan == 'Business'">
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#" @click="sealModal = true">My Seal</a>
+                    <a class="dropdown-item" href="#" @click="stampModal = true">My Stamp</a>
+                  </template>
+                </div>
               </div>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </template>
       </div>
-
-      <ul class="nav navbar-nav align-items-center">
+      <ul class="nav navbar-nav align-items-center ms-auto">
         <li class="nav-item d-none d-sm-block">
           <a class="nav-link nav-link-style">
-            <button class="btn btn-sm btn-outline-primary waves-effect" @click="exportPDF">
-              Download
-            </button></a>
-        </li>
-        <li class="nav-item" v-if="canCancel">
-          <a class="nav-link nav-link-style">
-            <button class="btn btn-sm btn-outline-primary waves-effect" @click="cancel">
-              Cancel
+            <button class="btn btn-sm btn-outline-primary waves-effect" @click="exportHTMLToPDF" :disabled="isDownload">
+              <template v-if="isDownload">
+                <span class="spinner-border spinner-border-sm"></span>
+                Downloading
+              </template>
+              <template v-else>Download</template>
             </button>
           </a>
         </li>
-        <li class="nav-item d-none d-sm-block">
+        <template v-if="userDocument.is_the_owner_of_document === true">
+          <li class="nav-item" v-if="canCancel">
+            <a class="nav-link nav-link-style">
+              <button class="btn btn-sm btn-outline-primary waves-effect" @click="cancel">Cancel</button>
+            </a>
+          </li>
+        </template>
+        <template v-if="role != 'Viewer'">
+          <li class="nav-item" v-show="hasRole">
+            <a class="nav-link nav-link-style">
+              <button class="btn btn-sm btn-primary waves-effect" @click="doneModal = true">
+                <template v-if="userDocument.is_the_owner_of_document === true"> Finish </template>
+                <template v-else> Submit </template>
+              </button>
+            </a>
+          </li>
+        </template>
+        <li class="nav-item d-none d-sm-block"
+          v-if="userDocument.is_the_owner_of_document === true && role != 'Viewer'">
           <a class="nav-link nav-link-style">
-            <button class="btn btn-sm btn-primary waves-effect waves-float waves-light" @click="createModal = true"
+            <button class="btn btn-sm btn-primary waves-effect waves-float waves-light" @click="emailModal = true"
               style="margin-right: 5px">
-              Create Link
+              Send
             </button>
           </a>
         </li>
@@ -136,86 +157,57 @@
   </nav>
 
   <div class="content-area-wrapper container-xxl p-0 mt-5 overflow-x-scroll border-0"
-    style="position:static !important">
-    <AsideLeft :chunkFileId="pageId" :isOpen="editSignerModal" @close="editSignerModal = false" />
+    style="position: static !important">
+    <AsideLeft :chunkFileId="pageId" />
     <MainContent @docId="getDocId" @open="open" />
-    <AsideRight />
+    <AsideRight :isOpen="editSignerModal" @close="editSignerModal = false" />
   </div>
 
   <div class="fixed-bottom bg-white shadow-lg custom-sm">
     <AsideBottom :chunkFileId="pageId" :isOpen="addParticipantModal" @close="addParticipantModal = false" />
   </div>
 
-  <ModalComp :show="createModal" :size="'modal-md'" :footer="false" @close="createModal = false">
+  <ModalComp :show="emailModal" :footer="false" @close="emailModal = false">
     <template #header>
-      <h5 class="modal-title">Created Link</h5>
+      <h5 class="modal-title">Invite participant</h5>
     </template>
 
     <template #body>
-      <p class="text-center">Kindly find the generated link below</p>
-
-      <div class="mb-2">
-        <p class="text-center" style="font-size: 10px">
-          <code class="text-center">{{ linkUrl + '/to-sign/' + uri }}</code>
-        </p>
-        <button type="button" class="btn btn-sm btn-outline-dark waves-effect d-block mx-auto"
-          v-clipboard:copy="linkUrl + '/to-sign/' + uri" v-clipboard:success="onCopy" v-clipboard:error="onError">
-          Copy link
-        </button>
-      </div>
-
-      <div class="modal-footer pb-0 pe-0">
-        <button type="button" class="btn btn-sm btn-primary" @click="done">Done</button>
-      </div>
+      <p class="text-center">The following people will be invited to this document</p>
+      <MailToParticipant @close="emailModal = false" :isLoading="loading" />
     </template>
   </ModalComp>
 
-  <ModalComp :show="openNotificationModal" :size="'modal-sm'" :closeBtn="false">
+  <ModalComp :show="openNotificationModal" :size="'modal-md'" :closeBtn="false">
     <template #header>
-      <h4 class="modal-title text-success mb-0">
-        <Icon icon="mdi:alert-circle-check-outline" style="margin-bottom: 3px" />
-        Alert
-      </h4>
-    </template>
-
-    <template #body>
-      <div class="row">
-        <div class="col-md-12">
-          <h5 class="text-center"><i>Document sent successfully</i></h5>
-        </div>
-        <div class="col-md-6 d-none">
-          <div style="display: grid; place-items: center; height: 100%">
-            <div class="fw-normal">
-              <img src="@/assets/logo-dark.png" width="150" class="mb-2" alt="Logo" />
-              <h4 class="modal-title fw-bold mb-2">Awesome!</h4>
-              <p class="modal-text fw-normal">
-                You document has successfully been sent to your signatories.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6 d-none">
-          <div class="card mb-0">
-            <div class="card-header bg-primary justify-content-center">
-              <h5 class="card-title fw-bold text-light">How was your experience?</h5>
-            </div>
-            <div class="card-body">
-              <p class="card-subtitle fw-bold my-1">
-                Do you have any thought you'd like to share?
-              </p>
-              <textarea class="form-control mb-2" rows="4"></textarea>
-              <p class="card-subtitle fw-bold my-1">
-                Your feedbacks are very important to us, it gives us the opportunity to
-                serve you better.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div class="text-center">
+        <h2 class="fw-bold">Your document has been sent</h2>
+        <h6>Your feedback is very important to us. It gives us the opportunity to serve you better.</h6>
       </div>
     </template>
 
+    <template #body>
+      <div class="text-center">
+        <h4 class="mb-1 mt-2">How was your experience?</h4>
+
+        <div class="mb-2 mx-auto custom-width">
+          <StarRating :star-size="30" :increment="0.5" active-color="#ffc107" :show-rating="false"
+            v-model:rating="rating" />
+
+          <div class="d-flex justify-content-between align-items-center" style="width: 235px">
+            <p class="text-secondary">Bad</p>
+            <p class="text-secondary">Excellent</p>
+          </div>
+        </div>
+
+        <h6>Do you have any thought you'd like to share?</h6>
+      </div>
+
+      <textarea class="form-control mb-1" rows="4" v-model="feedback"></textarea>
+    </template>
+
     <template #footer>
-      <button class="btn btn-sm btn-primary" @click="closeNotification">Done</button>
+      <button class="btn btn-sm btn-primary" @click="sendRatedFeedback">Send</button>
     </template>
   </ModalComp>
 
@@ -229,20 +221,15 @@
         <div class="col-md-4 ms-auto">
           <button @click="updateModal" class="float-end btn btn-outline-secondary btn-sm waves-effect"
             id="updateSignature">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-              class="feather feather-edit">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
-            Update
+            <EditIcon />
+            Edit
           </button>
         </div>
       </div>
 
       <div class="divider"></div>
 
-      <SignatureList @selectedSignature="savePrint" />
+      <SignaturePrint @selectedSignature="savePrint" />
     </template>
   </ModalComp>
 
@@ -276,32 +263,78 @@
       <div class="row">
         <div class="col-md-10 ms-auto mt-2">
           <p class="fw-normal">
-            By clicking create, I agree that all signatures, marks or initials created
-            here are as valid as my hand written signature to the extent allowed by law.
+            By clicking create, I agree that all signatures, marks or initials created here are as valid as my hand
+            written signature to the extent allowed by law.
           </p>
         </div>
       </div>
     </template>
   </ModalComp>
 
-  <ModalComp :show="cancelModal" :size="'modal-sm'" @close="cancelModal = false">
+  <ModalComp :show="sealModal" :footer="false" :size="'modal-md'" @close="sealModal = false">
     <template #header>
-      <h4 class="modal-title text-danger mb-0">
-        <Icon icon="eva:alert-triangle-outline" style="margin-bottom: 3px" />
-        Alert
-      </h4>
+      <h4 class="modal-title">My Seal</h4>
     </template>
 
     <template #body>
-      <h3 class="text-center">Are you sure?</h3>
-      <p class="text-center"><i>Any changes will not be saved!</i></p>
+      <div class="row">
+        <div class="col-md-4 ms-auto">
+          <button @click="updateSeal" class="float-end btn btn-outline-secondary btn-sm waves-effect">
+            <SealIcon />
+            Manage
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <SealList />
+    </template>
+  </ModalComp>
+
+  <ModalComp :show="stampModal" :footer="false" :size="'modal-md'" @close="stampModal = false">
+    <template #header>
+      <h4 class="modal-title">My Stamp</h4>
     </template>
 
-    <template #footer>
-      <button class="btn btn-sm btn-primary" @click="deletePermanently">
-        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-        Proceed
-      </button>
+    <template #body>
+      <div class="row">
+        <div class="col-md-4 ms-auto">
+          <button @click="updateStamp" class="float-end btn btn-outline-secondary btn-sm waves-effect">
+            <svg width="21" height="12" xmlns="http://www.w3.org/2000/svg" class="ml-auto tool-svg" data-v-01cdeba4="">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M21 0H0v12h21V0Zm-.913 1H.913v10h19.174V1Z"
+                data-v-01cdeba4=""></path>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M17.348 3H3.652v6h13.696V3Zm-.913 1H4.565v4h11.87V4Z"
+                data-v-01cdeba4=""></path>
+            </svg>
+            Manage
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <StampList />
+    </template>
+  </ModalComp>
+
+  <ModalComp :show="createStampModal" :footer="false" :size="'modal-md'" @close="createStampModal = false">
+    <template #header>
+      <h4 class="modal-title">Manage a stamp</h4>
+    </template>
+
+    <template #body>
+      <StampCreate @close="createStampModal = false" />
+    </template>
+  </ModalComp>
+
+  <ModalComp :show="createSealModal" :footer="false" :size="'modal-lg'" @close="createSealModal = false">
+    <template #header>
+      <h4 class="modal-title">Manage a seal</h4>
+    </template>
+
+    <template #body>
+      <SealDigitalCreate @close="createSealModal = false" />
     </template>
   </ModalComp>
 
@@ -318,14 +351,54 @@
     </template>
 
     <template #footer>
-      <button class="btn btn-sm btn-primary" @click="confirmEdit">
-        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
-        Confirm
+      <button class="btn btn-sm btn-primary" @click="confirmEdit" :disabled="isDoneLoading">
+        <span v-show="isDoneLoading" class="spinner-border spinner-border-sm"></span>
+        <template v-if="!isDoneLoading">Confirm</template>
+        <template v-else> Processing...</template>
       </button>
     </template>
   </ModalComp>
 
-  <ModalComp :show="OTPFlag?.guest" :size="'modal-sm'" :footer="false" :closeBtn="false">
+  <ModalComp :show="cancelModal" :size="'modal-sm'" @close="cancelModal = false">
+    <template #header>
+      <h4 class="modal-title text-danger mb-0">
+        <Icon icon="eva:alert-triangle-outline" style="margin-bottom: 3px" />
+        Alert
+      </h4>
+    </template>
+
+    <template #body>
+      <h3 class="text-center">Are you sure?</h3>
+      <p class="text-center"><i>Changes will not be saved!</i></p>
+    </template>
+
+    <template #footer>
+      <button class="btn btn-sm btn-primary" @click="deletePermanently">
+        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+        Proceed
+      </button>
+    </template>
+  </ModalComp>
+
+  <ModalComp :show="notaryModal" :footer="false" :size="'modal-lg'" @close="notaryModal = false">
+    <template #header>
+      <h4 class="modal-title">Important Information</h4>
+    </template>
+
+    <template #body>
+      <div class="d-flex justify-content-end align-items-center">
+        <p title="Coming Soon" class="coming-soon border border-warning text-warning">Coming Soon</p>
+      </div>
+      <p class="card-text">
+        For now, please download this document, go to your dashboard and click on
+        <strong>Request a Notary.</strong>
+      </p>
+      <a :href="redirectToUserDashboard + '/redirecting?qt=' + token"
+        class="btn btn-sm btn-outline-primary waves-effect">Go to dashboard</a>
+    </template>
+  </ModalComp>
+
+  <ModalComp :show="confirmGuest" :size="'modal-sm'" :footer="false" @close="closeGuest">
     <template #header>
       <h4 class="modal-title text-warning mb-0">
         <Icon icon="icomoon-free:notification" style="margin-bottom: 3px" />
@@ -334,256 +407,264 @@
     </template>
 
     <template #body>
-      <p>Hi {{ profile.first_name }},</p>
-      <p>Welcome to ToNote.</p>
+      <p class="text-capitalize">Hi {{ profile.first_name }},</p>
       <p>
-        For the most secure e-signature, simply create a password and you can proceed to
-        sign your document.
+        Would you like to create an account? <br />
+        Simply enter a password to access this document any time
       </p>
-      <p>Thanks!</p>
 
-      <UserResetPassword />
+      <UserResetPassword @save="closeGuest" />
     </template>
   </ModalComp>
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
-import ModalComp from "@/components/ModalComp.vue";
-import UserResetPassword from "@/components/Auth/UserResetPassword.vue";
-import AsideLeft from "@/components/Document/Edit/Left/AsideLeft.vue";
-import AsideRight from "@/components/Document/Edit/Right/AsideRight.vue";
-import MainContent from "@/components/Document/Edit/Main/MainContent.vue";
+import { Icon } from '@iconify/vue';
+import EditIcon from '@/icons/EditIcon.vue';
+import SettingIcon from '@/icons/SettingIcon.vue';
+import VerticalEllipsis from '@/icons/VerticalEllipsis.vue';
+import SealIcon from '@/icons/SealIcon.vue';
+import StarRating from 'vue-star-rating';
 
-import AsideBottom from "@/components/Document/Edit/Mobile/AsideBottom.vue";
+import ModalComp from '@/components/ModalComp.vue';
+import UserResetPassword from '@/components/Auth/UserResetPassword.vue';
+import AsideLeft from '@/components/Document/Edit/Left/AsideLeft.vue';
+import AsideRight from '@/components/Document/Edit/Right/AsideRight.vue';
+import MainContent from '@/components/Document/Edit/Main/MainContent.vue';
 
-// // import MailToParticipant from "@/components/Document/Edit/MailToParticipant.vue";
+import AsideBottom from '@/components/Document/Edit/Mobile/AsideBottom.vue';
 
-import LeftTabWrapper from "@/components/Tab/TabLeftNav/LeftTabWrapper.vue";
-import LeftTabList from "@/components/Tab/TabLeftNav/LeftTabList.vue";
+import MailToParticipant from '@/components/Document/Edit/MailToParticipant.vue';
 
-import SignatureList from "@/components/Signature/SignatureList.vue";
-import SignaturePad from "@/components/Signature/SignaturePad.vue";
+import LeftTabWrapper from '@/components/Tab/TabLeftNav/LeftTabWrapper.vue';
+import LeftTabList from '@/components/Tab/TabLeftNav/LeftTabList.vue';
 
-import SignatureSelectFull from "@/components/Signature/SignatureTextFull.vue";
-import SignatureUpload from "@/components/Signature/SignatureUpload.vue";
-import SignatureSelectInitial from "@/components/Signature/SignatureTextInitial.vue";
+import SignaturePrint from '@/components/Signature/SignaturePrint.vue';
+import SignaturePad from '@/components/Signature/SignaturePad.vue';
 
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import SignatureSelectFull from '@/components/Signature/SignatureSelectFull.vue';
+import SignatureUpload from '@/components/Signature/SignatureUpload.vue';
+import SignatureSelectInitial from '@/components/Signature/SignatureSelectInitial.vue';
 
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import SealDigitalCreate from '@/components/Notary/Seal/SealDigitalCreate.vue';
+import SealList from '@/components/Notary/Seal/SealList.vue';
 
-import { useGetters, useActions } from "vuex-composition-helpers/dist";
-import { useRouter } from "vue-router";
-import { useToast } from "vue-toast-notification";
-import { dashboard } from "@/store/dashboard";
+import StampList from '@/components/Notary/Stamp/StampList.vue';
+import StampCreate from '@/components/Notary/Stamp/StampCreate.vue';
 
-import "jquery/dist/jquery.min";
-import $ from "jquery";
+import jsPDF from 'jspdf';
+import html2pdf from 'html2pdf.js';
 
-const toast = useToast();
+import { ref, onMounted, watch, onUpdated, onUnmounted } from 'vue';
+
+import { useGetters, useActions } from 'vuex-composition-helpers/dist';
+import { useRouter } from 'vue-router';
+// import { useToast } from "vue-toast-notification";
+import { dashboard } from '@/store/dashboard';
+// import Api from "@/api/Api";
+
+import 'jquery/dist/jquery.min';
+import $ from 'jquery';
+
+// const toast = useToast();
 const route = useRouter();
 
-const { token, profile, teams, link, isOpenModal, canCancel, OTPFlag } = useGetters({
-  token: "auth/token",
-  profile: "auth/profile",
-  OTPFlag: "auth/OTPFlag",
-  teams: "team/teams",
-  link: "signLink/link",
-  canCancel: "signLink/canCancel",
-  isOpenModal: "signLink/isOpenModal",
+const { token, profile, teams, userDocument, isOpenModal, canCancel, confirmGuest, isDoneLoading } = useGetters({
+  token: 'auth/token',
+  profile: 'auth/profile',
+  teams: 'team/teams',
+  userDocument: 'document/userDocument',
+  isOpenModal: 'document/isOpenModal',
+  canCancel: 'document/canCancel',
+  confirmGuest: 'document/confirmGuest',
+  isDoneLoading: 'document/isDoneLoading',
 });
 
-const {
-  removeNotification,
-  getLink,
-  getTools,
-  removeCancel,
-  removeDocument,
-  getUserPrints,
-  doneEditing,
-} = useActions({
-  doneEditing: "signLink/doneEditing",
-  removeNotification: "signLink/removeNotification",
-  getLink: "signLink/getLink",
-  removeCancel: "signLink/removeCancel",
-  removeDocument: "signLink/removeDocument",
-  getTools: "signLink/getTools",
-  getUserPrints: "print/getUserPrints",
-});
+const { doneEditing, sendFeedback, removeNotification, isGuest, removeDocument, removeRecentUpload, getUserPrints } =
+  useActions({
+    doneEditing: 'document/doneEditing',
+    sendFeedback: 'document/sendFeedback',
+    removeNotification: 'document/removeNotification',
+    isGuest: 'document/isGuest',
+    removeDocument: 'document/removeDocument',
+    removeRecentUpload: 'document/removeRecentUpload',
+    getUserPrints: 'print/getUserPrints',
+  });
 
-const redirectToUserDashboard = ref("");
+const redirectToWebsite = ref('');
+const redirectToUserDashboard = ref('');
 const addParticipantModal = ref(false);
 const editSignerModal = ref(false);
 const openNotificationModal = ref(isOpenModal.value);
 const isOpen = ref(false);
-const pageId = ref("");
+const notaryModal = ref(false);
+const pageId = ref('');
 const doneModal = ref(false);
 const cancelModal = ref(false);
-const doneDataUrl = ref("");
-const createModal = ref(false);
+const doneDataUrl = ref([]);
+const emailModal = ref(false);
 const affixModal = ref(false);
 const updateSignatureModal = ref(false);
+const sealModal = ref(false);
+const createSealModal = ref(false);
+const createStampModal = ref(false);
+const stampModal = ref(false);
 const loading = ref(false);
 const plan = ref(null);
 const hasRole = ref(false);
-const uri = ref("");
+const role = ref(null);
+const uri = ref('');
+const feedback = ref('');
+const rating = ref(0);
+const isDownload = ref(false);
 
 const currIEZoom = ref(100);
 
 const plusBtn = () => {
   let step = 20;
   currIEZoom.value += step;
-  $(".zum").css("zoom", " " + currIEZoom.value + "%");
+  $('.zum').css('zoom', ' ' + currIEZoom.value + '%');
 };
 
 const minusBtn = () => {
   let step = 20;
   currIEZoom.value -= step;
-  $(".zum").css("zoom", " " + currIEZoom.value + "%");
+  $('.zum').css('zoom', ' ' + currIEZoom.value + '%');
 };
 
 watch(
-  () => isOpenModal.value,
-  (isOpen) => {
-    if (isOpen) {
-      openNotificationModal.value = isOpen;
-    }
+  () => [isOpenModal.value, isDoneLoading.value],
+  ([isOpen, isDone], [isOldOpen, isOldDone]) => {
+    if (isOpen != isOldOpen) openNotificationModal.value = isOpen;
+    if (isDone != isOldDone) doneModal.value = isDone;
   }
 );
 
-const message = "Copied to clipboard!";
-const onCopy = () => {
-  return toast.default(message, {
-    timeout: 5000,
-    position: "top-right",
-  });
-};
-const onError = (e) => {
-  alert("Failed to copy texts", e);
+const closeGuest = () => {
+  isGuest(false);
+  window.location.href = process.env.VUE_APP_URL_WEBSITE;
 };
 
-const open = (params) => {
-  isOpen.value = params;
-};
+const open = (params) => (isOpen.value = params);
 
-const cancel = () => {
-  cancelModal.value = true;
-};
+const cancel = () => (cancelModal.value = true);
 
 const deletePermanently = () => {
   removeDocument({ documents: [{ document_id: uri.value, permanent_delete: true }] });
-  route.push({ name: "Document" });
+  route.push({ name: 'Dashboard' });
 };
 
-const getDocId = (params) => {
-  pageId.value = params;
-};
-
-const closeNotification = () => {
-  removeNotification(false);
-  window.location.href = redirectToUserDashboard.value + "/redirecting?qt=" + token.value;
-};
+const getDocId = (params) => (pageId.value = params);
 
 const updateModal = () => {
   affixModal.value = false;
   updateSignatureModal.value = true;
 };
 
-const exportPDF = (params) => {
-  const data = document.getElementById("mainWrapper");
-  html2canvas(data).then((canvas) => {
-    const imgWidth = 208;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight - 10;
-    let position = 10;
-
-    heightLeft -= pageHeight;
-
-    const doc = new jsPDF("p", "mm");
-
-    doc.addImage(canvas, "PNG", 0, position, imgWidth, imgHeight, "", "FAST");
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      doc.addPage();
-      doc.addImage(canvas, "PNG", 0, position, imgWidth, imgHeight, "", "FAST");
-      heightLeft -= pageHeight;
-    }
-
-    if (params == "done") {
-      doneDataUrl.value = canvas.toDataURL();
-      doneModal.value = false;
-
-      if (doneDataUrl.value != '') {
-        isDoneEdit();
-      }
-
-      toast.success("Document edited successfully", {
-        timeout: 5000,
-        position: "top-right",
-      });
-
-      return
-    }
-
-    doc.save(link.value.title + ".pdf");
-  });
+const updateSeal = () => {
+  sealModal.value = false;
+  createSealModal.value = true;
 };
 
-const done = () => {
-  route.push({ name: 'Document', query: { status: 'sign' } })
+const updateStamp = () => {
+  stampModal.value = false;
+  createStampModal.value = true;
+};
+
+const exportHTMLToPDF = async (params) => {
+  isDownload.value = true
+  const pages = document.getElementsByClassName('downloader');
+
+  const opt = {
+    margin: [0, 0, -2, 0],
+    filename: userDocument.value.title,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { dpi: 192, letterRendering: true },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compressPDF: true }
+  };
+
+  const doc = new jsPDF(opt.jsPDF);
+  const pageSize = jsPDF.getPageSize(opt.jsPDF);
+
+  doc.setProperties({
+    title: userDocument.value.title,
+    // subject: 'This is the subject',
+    author: 'ToNote',
+    keywords: 'To-Sign, e-signing, web 1.0',
+    creator: 'ToNote Technologies'
+  });
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+
+    if (params != 'done') {
+      const pageImage = await html2pdf().set(opt).from(page).outputImg()
+      if (i != 0) doc.addPage();
+      doc.addImage(pageImage.src, 'jpeg', opt.margin[0], opt.margin[0], pageSize.width, pageSize.height);
+    } else {
+      await html2pdf().set(opt).from(page).outputPdf().then(function (pdf) {
+        doneDataUrl.value.push('data:application/pdf;base64,' + btoa(pdf));
+      })
+    }
+  }
+
+  if (params == 'done') {
+    if (pages.length === doneDataUrl.value.length) isDoneEdit();
+    return;
+  }
+
+  const pdf = doc.save(opt.filename);
+  if (pdf) isDownload.value = false
+  return pdf;
 };
 
 const isDoneEdit = () => {
   let dataObj = {
     document_id: uri.value,
-    files: [doneDataUrl.value],
+    files: doneDataUrl.value,
   };
   doneEditing(dataObj);
-
-  window.location.href = redirectToUserDashboard.value + "/redirecting?qt=" + token.value;
 };
-
-// const sharedDocument = () => {
-//   // exportPDF("done");
-
-//   loading.value = true;
-
-//   setTimeout(() => {
-//     // isDoneEdit();
-//     loading.value = false;
-//     createModal.value = false;
-//   }, 3000);
-// };
 
 const confirmEdit = () => {
-  // isDoneEdit();
-  window.location.href =
-    redirectToUserDashboard.value + "/redirecting?qt=" + token.value;
-
-  doneModal.value = false;
-  toast.success("Document edited successfully", { timeout: 5000, position: "top-right" });
-  window.location.href = redirectToUserDashboard.value + "/redirecting?qt=" + token.value;
+  if (!userDocument.value.is_the_owner_of_document) {
+    exportHTMLToPDF('done');
+  } else {
+    window.location.href = redirectToUserDashboard.value + '/redirecting?qt=' + token.value;
+  }
 };
 
-const linkUrl = ref("");
+const sendRatedFeedback = () => {
+  const feedObj = {
+    review_id: uri.value,
+    review_type: 'Document',
+    comment: feedback.value,
+    rating: rating.value.toString(),
+  };
+
+  sendFeedback(feedObj);
+  removeNotification(false);
+
+  setTimeout(() => {
+    window.location.href = redirectToUserDashboard.value + '/redirecting?qt=' + token.value;
+  }, 3000);
+};
+
+onUpdated(() => {
+  if (userDocument.value?.participants_count > 0) {
+    userDocument.value?.participants.map((participant) => {
+      if (participant?.user?.id == profile.value?.id) role.value = participant.role;
+    });
+  }
+});
+
 onMounted(() => {
   redirectToUserDashboard.value = process.env.VUE_APP_URL_AUTH_LIVE;
+  redirectToWebsite.value = process.env.VUE_APP_URL_WEBSITE;
   uri.value = route.currentRoute.value.params.document_id;
-  getLink(uri.value)
-
-  linkUrl.value =
-    process.env.NODE_ENV === "development"
-      ? process.env.VUE_APP_URL_AUTH_LOCAL
-      : process.env.VUE_APP_URL_SIGN_LINK;
-
-  getTools(uri.value);
 
   if (token.value == null) return;
-  if (token.value != "" || token.value != null) {
+  if (token.value != '' || token.value != null) {
     hasRole.value = true;
     dashboard.value.setToken(token.value);
     getUserPrints(token.value);
@@ -594,20 +675,22 @@ onMounted(() => {
   }
 
   setTimeout(() => {
-    if (window.Tawk_API) {
-      window.Tawk_API.hideWidget();
-    }
+    if (window.Tawk_API) window.Tawk_API.hideWidget();
   }, 2000);
 });
 
 onUnmounted(() => {
-  removeCancel();
+  removeRecentUpload();
 });
 </script>
 
 <style scoped>
 .overflow-x-scroll {
   overflow-x: scroll !important;
+}
+
+.top-100 {
+  top: 115% !important;
 }
 
 .custom-position {
@@ -689,6 +772,22 @@ onUnmounted(() => {
   background: #555;
 }
 
+.custom-width {
+  width: 50%;
+}
+
+@media screen and (min-width: 320px) {
+  .custom-width {
+    width: 75%;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .custom-width {
+    width: 50%;
+  }
+}
+
 @media screen and (max-width: 991.5px) {
   .header-navbar {
     display: none !important;
@@ -696,6 +795,10 @@ onUnmounted(() => {
 
   .custom-sm {
     display: block;
+  }
+
+  .custom-width {
+    width: 50%;
   }
 
   .content-area-wrapper {

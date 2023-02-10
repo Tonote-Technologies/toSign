@@ -6,6 +6,10 @@ export const SET_TOKEN_TYPE = (state, tokenType) => {
   state.token_type = tokenType;
 };
 
+export const SET_LOADER = (state, load) => {
+  state.loader = load;
+};
+
 export const SET_AUTH_ERROR = (state, error) => {
   state.errors = error;
 };

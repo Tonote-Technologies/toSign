@@ -1,13 +1,7 @@
 <template>
   <div class="content-right border-0">
     <div @click="$emit('open', (openSide = true))" class="d-none sidebar-toggle d-block d-lg-none ms-1 my-1">
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-        class="feather feather-menu font-medium-5">
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
+      <MenuIcon />
     </div>
 
     <div class="content-body">
@@ -15,47 +9,22 @@
       </div>
       <div class="email-app-list">
         <div class="email-user-list">
-          <!-- <div class="email-user-list ps ps--active-y"> -->
           <div class="card shadow-none bg-light">
-            <div class="card-body shadow-none p-1">
-              <div class="d-flex justify-content-center position-fixed d-none" style="z-index: 1">
-                <span title="zoom-in"
-                  class="badge bg-primary cursor-pointer custom-box rounded-circle zoom d-flex justify-content-center align-items-center"
-                  @click="plus">
-                  <Icon icon="ep:zoom-in" class="custom-box" />
-                </span>
-                <span title="recycle"
-                  class="badge bg-primary cursor-pointer custom-box rounded-circle zoom-out d-flex justify-content-center align-items-center mx-1"
-                  @click="refresh">
-                  <Icon icon="bi:recycle" class="custom-box" />
-                </span>
-                <span title="zoom-out"
-                  class="badge bg-primary cursor-pointer custom-box rounded-circle zoom-init d-flex justify-content-center align-items-center"
-                  @click="minus">
-                  <Icon icon="ep:zoom-out" class="custom-box" />
-                </span>
-              </div>
-
-              <br class="d-none" />
-
+            <div class="card-body shadow-none px-1">
               <p>Title: {{ theDoc.title }}</p>
-              <div class="target">
-                <div id="mainWrapper" class="mx-auto" style="width: 820px;">
-                  <div v-for="doc in theDoc.documentUploads" :key="doc.id" class="position-relative">
-                    <RenderPage :file="doc.file_url" @click="$emit('docId', doc.id)" @pageId="getPageId"
-                      @documentHeight="getHeight">
-                      <template #document-tools>
-                        <template v-if="theTools?.length != 0 && documentHeight">
-                          <div v-for="tool in theTools" :key="tool.id" class="parent"
-                            :style="{ height: documentHeight + 'px' }">
-                            <ToolAnnotation @remove="remove" :tool="tool"
-                              :owner="{ isOwner: theDoc.is_the_owner_of_document }" />
-                          </div>
-                        </template>
-                      </template>
-                    </RenderPage>
-                  </div>
-                </div>
+              <div id="mainWrapper" class="mx-auto" :style="{ width: '815px' }">
+                <RenderPage v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url" @click="$emit('docId', doc.id)"
+                  @pageId="getPageId" @documentHeight="getHeight">
+                  <template #document-tools>
+                    <template v-if="theTools?.length != 0 && documentHeight">
+                      <div v-for="tool in activeTaskFilter(theTools, doc.id)" :key="tool.id" class="parent"
+                        :style="{ height: documentHeight + 'px' }">
+                        <ToolAnnotation @remove="remove" :tool="tool"
+                          :owner="{ isOwner: theDoc.is_the_owner_of_document, name: theDoc.document_owner }" />
+                      </div>
+                    </template>
+                  </template>
+                </RenderPage>
               </div>
             </div>
           </div>
@@ -70,25 +39,27 @@
 </template>
 
 <script setup>
-import { Icon } from "@iconify/vue";
-import "jquery/dist/jquery.min";
-import $ from "jquery";
-import { dashboard } from "@/store/dashboard";
-import ToolAnnotation from "@/components/Document/Edit/Tools/ToolAnnotation.vue";
-import RenderPage from "./RenderPDFDoc.vue";
+import { dashboard } from '@/store/dashboard';
+import ToolAnnotation from '@/components/Document/Edit/Tools/ToolAnnotation.vue';
+import RenderPage from './RenderPage.vue';
+import MenuIcon from '@/icons/MenuIcon.vue';
 
-import { ref, onMounted, watch } from "vue";
-import { useGetters, useActions } from "vuex-composition-helpers/dist";
+import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useGetters, useActions } from 'vuex-composition-helpers/dist';
 
-const { link, workingTools, isLoading } = useGetters({
-  profile: "auth/profile",
-  workingTools: "signLink/workingTools",
-  isLoading: "signLink/isLoading",
-  link: "signLink/link",
+const router = useRouter();
+
+const { userDocument, workingTools, isLoading } = useGetters({
+  workingTools: 'document/workingTools',
+  userDocument: 'document/userDocument',
+  isLoading: 'document/isLoading',
 });
 
-const { removeTool } = useActions({
-  removeTool: "signLink/removeTool",
+const { getUserDocument, getTools, removeTool } = useActions({
+  getUserDocument: 'document/getUserDocument',
+  getTools: 'document/getTools',
+  removeTool: 'document/removeTool',
 });
 
 const openSide = ref(false);
@@ -96,49 +67,53 @@ const theDoc = ref('');
 const theTools = ref([]);
 const documentHeight = ref(0);
 
+const activeTaskFilter = (tools, docUpId) => {
+  let activeTasks = tools.filter((tool) => {
+    return tool.document_upload_id === docUpId;
+  });
+  return activeTasks;
+};
+
+const files = ref([]);
+const sortedFile = ref('');
 watch(
-  () => [link.value, isLoading.value],
+  () => [userDocument.value, isLoading.value],
   ([newDoc, newTool], [oldDoc, oldTool]) => {
-    if (oldDoc != newDoc) theDoc.value = newDoc;
+    if (oldDoc != newDoc) {
+      theDoc.value = newDoc
+    }
 
     if (oldTool != newTool) theTools.value = workingTools.value;
+
   },
   { deep: true }
 );
 
-const getHeight = (event) => {
-  documentHeight.value = event;
-};
+const getHeight = (event) => (documentHeight.value = event);
 
-const remove = (params) => {
-  return removeTool(params.id);
-};
+const remove = (params) => removeTool(params);
 
-let zoom = 1;
-
-function plus() {
-  zoom += 0.1;
-  $(".target").css("transform", "scale(" + zoom + ")");
-}
-
-function refresh() {
-  zoom = 1;
-  $(".target").css("transform", "scale(" + zoom + ")");
-}
-
-function minus() {
-  zoom -= 0.1;
-  $(".target").css("transform", "scale(" + zoom + ")");
-}
-
+const uri = ref('');
 onMounted(() => {
-  theTools.value = workingTools.value;
+  uri.value = router.currentRoute.value.params.document_id;
+  getUserDocument(uri.value);
+  getTools(uri.value);
+
+  setTimeout(() => {
+    userDocument.value?.documentUploads?.filter(item => {
+      // if (item.status == 'Processing') {
+        if (item.status == 'Processing' && item.number_ordering != null) {
+        files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering })
+      }
+      sortedFile.value = files.value.sort((a, b) => (a.number > b.number) ? 1 : -1)
+    })
+  }, 1000);
 });
 </script>
 
 <style scoped>
 .parent {
-  width: 820px;
+  width: 815px;
   position: absolute;
   user-select: none;
 }

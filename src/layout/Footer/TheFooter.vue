@@ -1,5 +1,5 @@
 <template>
-  <footer class="footer footer-static footer-light text-center">
+  <footer class="footer footer-static footer-light text-center custom-w">
     <p class="clearfix mb-0 ">
       <span class="float-md-center d-block d-md-inline-block mt-25">
         COPYRIGHT &copy; {{ new Date().getFullYear() }}
@@ -28,6 +28,10 @@ const toTop = function () {
 </script>
 
 <style scoped>
+.custom-w {
+  min-width: 860px;
+}
+
 .scroll-top {
   bottom: 20%;
 }

@@ -1,6 +1,6 @@
 <template>
-  <div class="card">
-    <div class="card-header">
+  <div class="card bg-light">
+    <div class="card-header bg-white">
       <div class="user-details d-flex justify-content-between align-items-center flex-wrap">
         <div class="mail-items">
           <template v-if="!theDocs">
@@ -47,27 +47,41 @@
       </div>
     </div>
 
-    <div class="card-body mail-message">
-      <div v-for="(doc, index) in theDocs.documentUploads" class="mb-1" :key="index">
-        <RenderPage :file="doc.file_url" />
+    <div class="divider bg-light pb-1 m-0"></div>
+
+    <div class="card-body mail-message py-0">
+      <div v-for="(doc, index) in sortedFile" class="mb-1" :key="index">
+        <RenderPage :file="doc.file_url" :comp="sortedFile.length <= 1 ? 'audit' : ''" />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import RenderPage from "@/components/Document/Edit/Main/RenderPDFDoc.vue";
+import RenderPage from "@/components/Document/Edit/Main/RenderPage.vue";
 import { ref, defineProps, watch } from 'vue'
 import moment from "moment";
 
 const props = defineProps({ docs: Object });
 const theDocs = ref('')
 
+const files = ref([]);
+const sortedFile = ref('');
 watch(
   () => props.docs,
   (newDocs, oldDocs) => {
     if (newDocs != oldDocs) {
       theDocs.value = newDocs;
+      theDocs.value.documentUploads.filter((item) => {
+        // if (item.number_ordering == null)
+        if (item.status == 'Processing')
+          files.value.push({
+            id: item.id,
+            file_url: item.file_url,
+            number: item.number_ordering,
+          });
+      });
+      sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
     }
   }
 );

@@ -1,4 +1,4 @@
-import Tool from "@/api/modules/Tool";
+import Tool from "@/api/Tool";
 import router from "@/router/router";
 import { useToast } from "vue-toast-notification";
 const toast = useToast();

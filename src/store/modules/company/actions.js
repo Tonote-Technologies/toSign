@@ -1,4 +1,4 @@
-import Company from "@/api/modules/Company";
+import Company from "@/api/Company";
 // import { useToast } from "vue-toast-notification";
 // const toast = useToast();
 

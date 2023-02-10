@@ -30,6 +30,18 @@ export const SET_NOTIFICATION = (state, modal) => {
   state.isOpenModal = modal;
 };
 
+export const SET_GUEST = (state, isNew) => {
+  state.guest = isNew;
+};
+
+export const SET_CONFIRM_GUEST = (state, confirm) => {
+  state.confirmGuest = confirm;
+};
+
+export const SET_FEEDBACK = (state, feed) => {
+  state.feedback = feed;
+};
+
 export const SET_RESOURCE_TOOLS = (state, tool) => {
   state.resourceTools = tool;
 };
@@ -53,6 +65,10 @@ export const SET_LOADER = (state, loader) => {
 
 export const SET_DOCUMENT_LOADER = (state, loader) => {
   state.isDocLoading = loader;
+};
+
+export const SET_PHOTO_LOADER = (state, loader) => {
+  state.isPhotoLoading = loader;
 };
 
 export const SET_TOOL_LOADER = (state, loader) => {

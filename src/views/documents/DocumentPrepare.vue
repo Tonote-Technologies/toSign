@@ -24,15 +24,15 @@ import { useRouter } from "vue-router";
 
 const route = useRouter();
 
-const { useGetters } = createNamespacedHelpers(["signLink"]);
+const { useGetters } = createNamespacedHelpers(["document"]);
 
-const { link } = useGetters(["link"]);
+const { userDocument } = useGetters(["userDocument"]);
 
 const isEncrypting = ref(true);
 
 setTimeout(() => {
   isEncrypting.value = false;
-  route.push({ name: "document.edit", params: { document_id: link.value.id } });
+  route.push({ name: "document.edit", params: { document_id: userDocument.value.id } });
 }, 2000);
 </script>
 

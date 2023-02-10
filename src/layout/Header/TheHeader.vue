@@ -1,41 +1,61 @@
 <template>
-  <nav v-if="dashboard.token != null" style="height: 70px"
+  <nav v-if="isVerifyPage || dashboard.token != null || token != null" style="height: 70px"
     class="header-navbar navbar-expand-lg navbar navbar-fixed align-items-center navbar-shadow navbar-brand-center"
     data-nav="brand-center">
     <div class="navbar-header d-lg-block d-none">
       <ul class="nav navbar-nav">
         <li class="nav-item">
-          <router-link :to="{ name: 'Document' }" class="navbar-brand me-0">
-            <img src="@/assets/logo-dark.png" alt="ToNote" height="26" />
-          </router-link>
+          <template v-if="role != 'Viewer'">
+            <router-link :to="{ name: 'Dashboard' }" class="navbar-brand me-0">
+              <img src="@/assets/logo-dark.png" alt="ToNote" height="26" />
+            </router-link>
+          </template>
+          <template v-else>
+            <a href="#!" class="navbar-brand me-0">
+              <img src="@/assets/logo-dark.png" alt="ToNote" height="26" />
+            </a>
+          </template>
         </li>
       </ul>
     </div>
 
     <div class="navbar-container d-flex justify-content-between align-items-center content">
       <div class="bookmark-wrapper d-flex align-items-center">
-        <ul class="nav navbar-nav bookmark-icons">
+        <ul class="nav navbar-nav bookmark-icons" v-if="role != 'Viewer'">
           <li class="nav-item">
-            <a role="button" class="text-primary fw-bold" @click='$router.go(-1)'>
+            <a role="button" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="true">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="feather feather-chevron-left font-medium-4" style="height: 2rem !important">
-                <polyline points="15 18 9 12 15 6"></polyline>
+                class="feather feather-home ficon" style="font-size: 22px">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
               <span class="visually-hidden"></span>
-              Back
             </a>
+
+            <div class="dropdown-menu dropdown-menu-start left" data-popper-placement="bottom-start">
+              <a class="dropdown-item" :href="redirectToUserDashboard + '/redirecting?qt=' + token">
+                Dashboard</a>
+              <router-link :to="{ name: 'Dashboard' }" class="dropdown-item">My Documents</router-link>
+            </div>
           </li>
         </ul>
       </div>
 
       <div class="d-lg-none d-md-block text-center">
-        <router-link :to="{ name: 'Document' }" class="navbar-brand me-0">
-          <img src="@/assets/logo-dark.png" alt="ToNote" height="20" />
-        </router-link>
+        <template v-if="role != 'Viewer'">
+          <router-link :to="{ name: 'Dashboard' }" class="navbar-brand me-0">
+            <img src="@/assets/logo-dark.png" alt="ToNote" height="20" />
+          </router-link>
+        </template>
+        <template v-else>
+          <a href="#!" class="navbar-brand me-0">
+            <img src="@/assets/logo-dark.png" alt="ToNote" height="20" />
+          </a>
+        </template>
       </div>
 
-      <ul v-if="isVerifyPage || dashboard.token != null || token != null" class="nav navbar-nav align-items-center">
+      <ul class="nav navbar-nav align-items-center">
         <li class="nav-item dropdown dropdown-user">
           <a class="nav-link dropdown-toggle dropdown-user-link" id="dropdown-user" href="#" data-bs-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">
@@ -110,7 +130,7 @@
               </div>
             </div>
 
-            <div v-show="plan" class="dropdown-divider"></div>
+            <div v-if="plan" class="dropdown-divider"></div>
 
             <a class="dropdown-item text-center" role="button" @click="logout">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -125,49 +145,43 @@
       </ul>
     </div>
   </nav>
-  <SignHeader v-else />
 </template>
 
 <script setup>
-import SignHeader from "./SignHeader.vue";
 import { dashboard } from "@/store/dashboard";
 import { ref, computed, onMounted, watch, onUpdated } from "vue";
 
 import { useGetters, useActions } from "vuex-composition-helpers/dist";
 
-const { token, profile, teams } = useGetters({
+const { token, profile, teamLoader, teams, userDocument } = useGetters({
   token: "auth/token",
   profile: "auth/profile",
+  teamLoader: "team/teamLoader",
   teams: "team/teams",
+  userDocument: "document/userDocument",
 });
 
 const { logoutUser } = useActions({
   logoutUser: "auth/logoutUser",
 });
 
+const role = ref("");
 const image = ref("");
 const firstName = ref("");
 const lastName = ref("");
 const plan = ref("");
 const redirectToUserDashboard = ref("");
 const isVerifyPage = ref(false);
-const isDevelopment = ref(false);
 
 watch(
-  () => dashboard.value.token,
-  (newToken) => {
-    if (newToken) {
+  () => [dashboard.value.token, teamLoader.value],
+  ([newToken, newTeam], [oldToken, oldTeam]) => {
+    if (newToken != oldToken) {
       isVerifyPage.value = true;
+    }
 
-      if (teams.value?.length > 0) {
-        plan.value = teams.value[0].subscription.plan.name;
-      }
-
-      // teams.value?.map((team) => {
-      //   if (team.active === true) {
-      //     plan.value = team.subscription?.plan?.name;
-      //   }
-      // });
+    if (newTeam != oldTeam) {
+      plan.value = teams.value[0].subscription.plan.name;
     }
   }
 );
@@ -186,14 +200,25 @@ const logout = () => {
 };
 
 onUpdated(() => {
-  if (teams.value.length > 0) {
-    plan.value = teams.value[0].subscription.plan.name;
-    image.value = teams.value[0].image;
-  }
+  // teams.value?.map((team) => {
+  //   image.value = team?.image;
+  //   if (team.active === true) {
+  //     plan.value = team?.subscription?.plan?.name;
+  //   }
+  // });
+
+  setTimeout(() => {
+    if (userDocument.value?.participants_count > 0) {
+      userDocument.value?.participants.map((participant) => {
+        if (participant?.user?.id == profile.value?.id) {
+          role.value = participant.role;
+        }
+      });
+    }
+  }, 2500);
 });
 
 onMounted(() => {
-  isDevelopment.value = process.env.NODE_ENV == 'development' ? true : false
   redirectToUserDashboard.value = process.env.VUE_APP_URL_AUTH_LIVE;
 });
 </script>

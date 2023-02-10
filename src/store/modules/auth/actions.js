@@ -1,133 +1,99 @@
-import User from "@/api/modules/Auth";
+import User from "@/api/Auth";
 import router from "@/router/router";
 import { useToast } from "vue-toast-notification";
 const toast = useToast();
 
-export const clearToken = ({ commit }) => {
+export const clearStore = ({ commit }) => {
   commit("SET_TOKEN", null);
-  commit("SET_USER_PROFILE", null);
-  commit("SET_RESEND_OTP", null);
-  commit("SET_FLAG", {})
   window.localStorage.removeItem('vuex');
 };
 
 export const logoutUser = ({ commit }, formData) => {
   User.logout(formData)
     .then(() => {
-      commit("SET_TOKEN", null);
-      commit("SET_USER_PROFILE", null);
-      commit("SET_RESEND_OTP", null);
-      commit("SET_FLAG", {})
+      window.sessionStorage.removeItem('token');
       window.localStorage.removeItem('vuex');
 
       if (process.env.NODE_ENV == 'development') {
         router.push({ name: "Login" });
       } else {
-        window.location.href = process.env.VUE_APP_URL_WEBSITE;
+        window.location.href = process.env.VUE_APP_URL_AUTH_LIVE;
       }
     })
     .catch((error) => {
-      if (error.response.status === 401 || error.response.status == 422 || error.response.status == 403) {
+      if (error.response.status === 401 || error.response.status == 422) {
         commit("SET_TOKEN", null);
-        commit("SET_USER_PROFILE", null);
-        commit("SET_RESEND_OTP", null);
-        commit("SET_FLAG", {})
         router.push({ name: "Login" });
       }
     });
 };
 
 export const userVerifyOTP = ({ commit }, formData) => {
-  commit("SET_LOADER", true);
-  if (formData.flag == 2) {
-    const data = formData.payload;
-    User.login({ email: data.email, password: data.password })
-      .then((response) => {
-        commit("SET_TOKEN", response.data.token);
+  (formData.flag == 0) ? commit("SET_FLAG", { data: formData.payload }) : commit("SET_FLAG", {});
 
-        User.show()
-          .then((response) => {
-            commit("SET_USER_PROFILE", response.data.data);
-          })
+  commit("SET_LOADER", true);
+  User.verifyOTP(formData.payload)
+    .then((response) => {
+      commit("SET_TOKEN", response.data.token);
+      commit("SET_TOKEN_TYPE", "Bearer");
+      User.show().then((response) => {
+        commit("SET_USER_PROFILE", response.data.data);
 
         router.push({
-          name: "document.audit",
-          params: { document_id: data.document_id },
+          name: "document.edit",
+          params: { document_id: router.currentRoute.value.query.di },
         });
 
         setTimeout(() => {
           commit("SET_LOADER", false);
         }, 1000);
       })
-      .catch((error) => {
-        commit("SET_LOADER", false);
-        if (error?.response?.status == 401 || error?.response?.status == 404) {
-          commit("SET_AUTH_ERROR", error?.response?.data.message);
-          return toast.error(`${error?.response?.data.errors.root}`, {
-            timeout: 5000,
-            position: "top-right",
-          });
+    })
+    .catch((error) => {
+      commit("SET_LOADER", false);
+      if (error.response.status == 422) {
+        toast.error(error.response.data.message, {
+          timeout: 5000,
+          position: "top-right",
+        });
+      } else if (error.response.status == 401) {
+        let hasError = ''
+        if (error.response.data?.data?.error != '') {
+          hasError = error.response.data?.data?.error
         }
-      });
-  } else {
-    User.verifyOTP(formData.payload)
-      .then((response) => {
-        commit("SET_TOKEN", response.data.token);
-        commit("SET_TOKEN_TYPE", "Bearer");
-        User.show().then((response) => {
-          commit("SET_USER_PROFILE", response.data.data);
-
-          router.push({
-            name: "document.edit",
-            params: { document_id: formData.payload.document_id },
-          });
-
-          setTimeout(() => {
-            commit("SET_LOADER", false);
-          }, 1000);
-        })
-      })
-      .catch((error) => {
-        commit("SET_LOADER", false);
-        if (error.response.status == 422) {
-          toast.error(error.response.data.message, {
-            timeout: 5000,
-            position: "top-right",
-          });
-        } else if (error.response.status == 401) {
-          let hasError = ''
-          if (error.response.data?.data?.error != '') {
-            hasError = error.response.data?.data?.error
-          }
-          if (error.response.data?.errors?.root) {
-            hasError = error.response.data?.errors?.root
-          }
-
-          if (hasError == 'You are not a participant in this document') {
-            router.push({ name: 'Error' })
-          }
-
-          toast.error(hasError, {
-            timeout: 5000,
-            position: "top-right",
-          });
+        if (error.response.data?.errors?.root) {
+          hasError = error.response.data?.errors?.root
         }
-      });
-  }
+
+        if (hasError == 'You are not a participant in this document') {
+          router.push({ name: 'Error' })
+        }
+
+        toast.error(hasError, {
+          timeout: 5000,
+          position: "top-right",
+        });
+      }
+    });
 };
 
 export const resetPassword = ({ commit }, formData) => {
   User.changePassword(formData)
     .then(() => {
       commit("SET_FLAG", {})
-      toast.success("Password created successfully", {
+
+      toast.success("Account created successfully", {
         timeout: 5000,
         position: "top-right",
       });
+
+      setTimeout(() => {
+        window.location.href = process.env.VUE_APP_URL_WEBSITE;
+      }, 2000);
     })
     .catch((error) => {
       if (error.response.status == 422) {
-        commit("SET_FLAG", { guest: false })
+        console.log(error.response)
       }
     });
 };
@@ -150,14 +116,20 @@ export const setAuthentication = ({ commit }, data) => {
   User.show()
     .then((response) => {
       commit("SET_USER_PROFILE", response.data.data);
-      if (data.documentId != undefined) {
+      if (data.documentId != undefined && data.edit == 1) {
+        return router.push({
+          name: "document.edit",
+          params: { document_id: data.documentId },
+        });
+      }
+      if (data.documentId != undefined && data.edit == 0) {
         return router.push({
           name: "document.audit",
           params: { document_id: data.documentId },
         });
       }
       if (data.status != '') {
-        return router.push({ name: "Document", query: { status: data.status } })
+        return router.push({ name: "Dashboard", query: { status: data.status } })
       }
     })
     .catch((error) => {
@@ -186,7 +158,7 @@ export const loginUser = ({ commit }, formData) => {
       User.show()
         .then((response) => {
           commit("SET_USER_PROFILE", response.data.data);
-          router.push({ name: "Document" });
+          router.push({ name: "document.dashboard" });
 
           toast.success("Welcome to ToNote ", {
             timeout: 5000,
@@ -198,48 +170,6 @@ export const loginUser = ({ commit }, formData) => {
       if (error.response.status == 401 || error.response.status == 404) {
         commit("SET_AUTH_ERROR", error.response.data.message);
         toast.error(`${error.response.data.errors.root}`, {
-          timeout: 5000,
-          position: "top-right",
-        });
-      }
-      if (error.response.status == 422) {
-        commit("SET_AUTH_ERROR", error.response.data.message);
-        toast.error(`${error.response.data.message}`, {
-          timeout: 5000,
-          position: "top-right",
-        });
-      }
-    });
-};
-
-export const createUserAccount = ({ commit }, formData) => {
-  User.register(formData.payload)
-    .then((response) => {
-      commit("SET_TOKEN", response.data.token);
-      commit("SET_TOKEN_TYPE", response.data.token_type);
-
-      User.show()
-        .then((response) => {
-          commit("SET_USER_PROFILE", response.data.data);
-          if (formData.di != undefined) {
-            return router.push({
-              name: "Verify",
-              query: { e: formData.payload.email, f: 0, di: formData.di },
-            });
-          }
-        })
-    })
-    .catch((error) => {
-      if (error.response.status == 401 || error.response.status == 404) {
-        commit("SET_AUTH_ERROR", error.response.data.message);
-        toast.error(`${error.response.data.errors.root}`, {
-          timeout: 5000,
-          position: "top-right",
-        });
-      }
-      if (error.response.status == 422) {
-        commit("SET_AUTH_ERROR", error.response.data.message);
-        toast.error(`${error.response.data.message}`, {
           timeout: 5000,
           position: "top-right",
         });

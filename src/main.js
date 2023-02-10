@@ -11,10 +11,4 @@ import "aos/dist/aos.css";
 import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
-import VueClipboard from 'vue3-clipboard'
-const clipOpt = {
-  autoSetContainer: true,
-  appendToBody: true,
-}
-
-createApp(App).use(router).use(store).use($).use(VueToast).use(Vue3DraggableResizable).use(VueClipboard, clipOpt).mount("#app");
+createApp(App).use(router).use(store).use($).use(VueToast).use(Vue3DraggableResizable).mount("#app");

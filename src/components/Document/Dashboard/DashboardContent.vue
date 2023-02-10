@@ -6,26 +6,27 @@
           <div class="card-datatable table-responsive" v-if="!isHidden">
             <div class="d-flex justify-content-between align-items-center header-actions text-nowrap mx-1 row mt-75">
               <div class="col-sm-12 col-lg-12">
-                <div v-if="dashboard.status != 'Sign'" class="card-header d-flex justify-content-lg-between py-1 p-0">
-                  <h4 class="card-title text-capitalize">{{ dashboard.status }} Files</h4>
+                <div class="card-header d-flex justify-content-lg-between py-1 p-0">
+                  <h4 class="card-title text-capitalize">{{ dashboard.status }} Document</h4>
 
-                  <a :href="redirectToESign + '/document/upload?qt=' + token" class="btn btn-sm btn-primary"
-                    v-show="dashboard.status != 'Deleted'">
-                    Sign a Document
-                  </a>
-                </div>
-                <div v-else class="card-header d-flex justify-content-lg-between py-1 p-0">
-                  <h4 class="card-title">Sign Link</h4>
-
+                  <div class="d-none">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Upload
+                      </button>
+                      <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">File Upload</a>
+                        <a class="dropdown-item" href="#">Folder Upload</a>
+                      </div>
+                    </div>
+                    <button class="btn btn-primary ms-2" @click="folderModal = true">
+                      New Folder
+                    </button>
+                  </div>
                   <router-link :to="{ name: 'document.upload' }" class="btn btn-sm btn-primary"
                     v-show="dashboard.status != 'Deleted'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                      class="feather feather-plus">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Create New Link
+                    Sign a Document
                   </router-link>
                 </div>
 
@@ -75,91 +76,102 @@
                 </div>
               </div>
               <div class="my-auto" v-else>
-                <template v-if="dashboard.status != 'Sign'">
-                  <table class="table table-borderless mb-5" role="grid" :id="theId">
-                    <thead>
-                      <tr role="row">
-                        <th rowspan="1" colspan="1" style="width: 0px" aria-label="">
-                          <input type="checkbox" @click="checkAll" v-model="isCheckAll" class="form-check-input" />
+                <table class="table table-borderless mb-5" role="grid" :id="theId">
+                  <thead>
+                    <tr role="row">
+                      <th rowspan="1" colspan="1" style="width: 0px" aria-label="">
+                        <input type="checkbox" @click="checkAll" v-model="isCheckAll" class="form-check-input"
+                          id="selectAllCheck" />
+                      </th>
+                      <template v-if="dashboard.status == 'Received'">
+                        <th rowspan="1" colspan="1" aria-label="Sender">
+                          Sent by
                         </th>
-                        <th rowspan="1" colspan="1" style="width: 258px" aria-label="Name">
-                          Name
-                        </th>
-                        <th rowspan="1" colspan="1" style="width: 348px" aria-label="Assigned To">
-                          Record
-                        </th>
-                        <th class="sorting" tabindex="0" rowspan="1" colspan="1" style="width: 227px"
-                          aria-label="Created Date: activate to sort column ascending">
-                          Last updated
-                        </th>
-                        <th rowspan="1" colspan="1" style="width: 115px" aria-label="Actions">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <template v-if="filtered.length > 0">
-                        <tr class="even" v-for="(doc, index) in filtered" :key="index">
-                          <td class="control" tabindex="0">
-                            <input type="checkbox" v-model="docIds" @change="updateCheckAll" :value="doc.id"
-                              class="form-check-input" />
-                          </td>
+                      </template>
+                      <th rowspan="1" colspan="1" style="width: 258px" aria-label="Name">
+                        Document Name
+                      </th>
+                      <th rowspan="1" colspan="1" style="width: 348px" aria-label="Participant">
+                        Record
+                      </th>
+                      <th class="sorting" tabindex="0" rowspan="1" colspan="1" style="width: 227px"
+                        aria-label="Created Date: activate to sort column ascending">
+                        Last updated
+                      </th>
+                      <th rowspan="1" colspan="1" aria-label="Actions">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template v-if="filtered.length > 0">
+                      <tr class="even" v-for="(doc, index) in filtered" :key="index">
+                        <td class="control" tabindex="0">
+                          <input type="checkbox" v-model="docIds" @change="updateCheckAll" :value="doc.id"
+                            class="form-check-input" />
+                        </td>
+                        <template v-if="dashboard.status == 'Received'">
                           <td>
-                            <template v-if="dashboard.status == 'Deleted'">
+                            <span class="text-capitalize">{{ doc.document_owner }}</span>
+                          </td>
+                        </template>
+                        <td>
+                          <template v-if="dashboard.status == 'Deleted'">
+                            <img src="@/assets/doc.png" class="me-1" alt="file-icon" height="15" />
+                            <span class="ml-1">{{ doc.title }}</span>
+                          </template>
+                          <template v-else>
+                            <a role="button" @click="
+                              getDocument({
+                                id: doc.id,
+                                status: dashboard.status,
+                                isView: true,
+                              })
+                            ">
                               <img src="@/assets/doc.png" class="me-1" alt="file-icon" height="15" />
                               <span class="ml-1">{{ doc.title }}</span>
-                            </template>
-                            <template v-else>
-                              <a role="button" @click="
-                                getDocument({
-                                  id: doc.id,
-                                  status: dashboard.status,
-                                  isView: true,
-                                })
-                              ">
-                                <img src="@/assets/doc.png" class="me-1" alt="file-icon" height="15" />
-                                <span class="ml-1">{{ doc.title }}</span>
-                              </a>
-                            </template>
-                          </td>
-                          <td>
-                            <span class="badge rounded-pill badge-light-primary">
-                              {{ doc.participants_count }} Participant(s)
-                            </span>
-                          </td>
+                            </a>
+                          </template>
+                        </td>
+                        <td>
+                          <span class="badge rounded-pill badge-light-primary">
+                            {{ doc.participants_count }} Participant(s)
+                          </span>
+                        </td>
 
-                          <td>{{ dateTime(doc.updated_at) }}</td>
+                        <td>{{ dateTime(doc.updated_at) }}</td>
 
-                          <td>
-                            <div class="dropdown">
-                              <button type="button"
-                                class="btn btn-sm dropdown-toggle hide-arrow py-0 waves-effect waves-float waves-light"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                  stroke-linejoin="round" class="feather feather-more-vertical">
-                                  <circle cx="12" cy="12" r="1"></circle>
-                                  <circle cx="12" cy="5" r="1"></circle>
-                                  <circle cx="12" cy="19" r="1"></circle>
-                                </svg>
-                              </button>
-                              <div class="dropdown-menu dropdown-menu-end">
-                                <template v-if="dashboard.status != 'Deleted'">
-                                  <a class="dropdown-item" role="button" @click="
-                                    getDocument({
-                                      id: doc.id,
-                                      status: dashboard.status,
-                                      isView: true,
-                                    })
-                                  ">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor"
-                                      stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"
-                                      class="feather me-50">
-                                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                      <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <span>View</span>
-                                  </a>
+                        <td>
+                          <div class="dropdown">
+                            <button type="button"
+                              class="btn btn-sm dropdown-toggle hide-arrow py-0 waves-effect waves-float waves-light"
+                              data-bs-toggle="dropdown" aria-expanded="false">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" class="feather feather-more-vertical">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                              </svg>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                              <template v-if="dashboard.status != 'Deleted'">
+                                <a class="dropdown-item" role="button" @click="
+                                  getDocument({
+                                    id: doc.id,
+                                    status: dashboard.status,
+                                    isView: true,
+                                  })
+                                ">
+                                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2"
+                                    fill="none" stroke-linecap="round" stroke-linejoin="round" class="feather me-50">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                  </svg>
+                                  <span>View</span>
+                                </a>
+
+                                <template v-if="doc.entry_point == 'Docs' && doc.allowed_seal_per_unit < 0">
                                   <a class="dropdown-item" role="button" @click="
                                     getDocument({
                                       id: doc.id,
@@ -175,47 +187,46 @@
                                     <span>Edit</span>
                                   </a>
                                 </template>
-                                <template v-else>
-                                  <a class="dropdown-item" href="#" @click="deleteDocument('restore', doc.id)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                      stroke-linejoin="round" class="feather feather-rotate-ccw me-50">
-                                      <polyline points="1 4 1 10 7 10"></polyline>
-                                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-                                    </svg>
-                                    <span>Restore</span>
-                                  </a>
-                                </template>
-                                <a class="dropdown-item" href="#" @click="deleteDocument('delete', doc.id)">
+                              </template>
+                              <template v-else>
+                                <a class="dropdown-item" href="#" @click="deleteDocument('restore', doc.id)">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="feather feather-trash me-50">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path
-                                      d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
+                                    stroke-linejoin="round" class="feather feather-rotate-ccw me-50">
+                                    <polyline points="1 4 1 10 7 10"></polyline>
+                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
                                   </svg>
-                                  <span>Delete</span>
+                                  <span>Restore</span>
                                 </a>
-                              </div>
+                              </template>
+                              <a class="dropdown-item" href="#" @click="deleteDocument('delete', doc.id)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                  stroke-linejoin="round" class="feather feather-trash me-50">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                  </path>
+                                </svg>
+                                <span>Delete</span>
+                              </a>
                             </div>
-                          </td>
-                        </tr>
-                      </template>
-                      <template v-else>
-                        <tr class="even text-center">
-                          <td colspan="5" class="pt-3">
-                            <i>No Items Found in
-                              {{ dashboard.status == "Deleted" ? "Trash" : dashboard.status }}</i>
-                          </td>
-                        </tr>
-                      </template>
-                    </tbody>
-                  </table>
-                </template>
-                <template v-else>
-                  <DashboardSignLink @showDeleteButton="showButton" :key="signLinkKey" />
-                </template>
+                          </div>
+                        </td>
+                      </tr>
+                    </template>
+                    <template v-else>
+                      <tr class="even text-center">
+                        <td colspan="5" class="pt-3">
+                          <i>No Items Found in
+                            {{
+                              dashboard.status == "Deleted" ? "Trash" : dashboard.status
+                            }}</i>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -224,16 +235,21 @@
             <div class="row my-2">
               <div class="col-12">
                 <div class="d-flex justify-content-between px-2">
-                  <button class="btn btn-sm btn-secondary me-1" @click="isHidden = !isHidden">
+                  <button class="btn btn-sm btn-secondary me-1 mb-1" @click="isHidden = !isHidden">
                     &larr; Back
                   </button>
-                  <a :href="redirectToESign + '?qt=' + token + '&di=' + editId + '&ed=1'"
-                    class="btn btn-sm btn-primary">Edit</a>
+
+                  <template v-if="userDocument.entry_point == 'Docs' && userDocument.is_the_owner_of_document">
+                    <router-link :to="{ name: 'document.edit', params: { document_id: editId } }"
+                      class="btn btn-sm btn-primary">Edit
+                    </router-link>
+                  </template>
                 </div>
 
                 <DashboardViewDocument :docs="theDoc" />
               </div>
             </div>
+            <!-- </div> -->
           </div>
         </div>
       </div>
@@ -293,13 +309,10 @@ import { dashboard } from "@/store/dashboard";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toast-notification";
 import DashboardViewDocument from "./DashboardViewDocument.vue";
-import DashboardSignLink from "./DashboardSignLink.vue";
 
 const toast = useToast();
 const route = useRouter();
 
-const signLinkKey = ref(0);
-const redirectToESign = ref("");
 const hasMultipleSelection = ref(false);
 const isHidden = ref(false);
 const loading = ref(false);
@@ -347,7 +360,6 @@ watch(
       theDoc.value = newUserDoc;
     }
 
-    reRender()
     closed.value = true;
     if (newDocStatus != oldDocStatus) {
       closed.value = true;
@@ -377,32 +389,17 @@ watch(
   }
 );
 
-const reRender = () => {
-  signLinkKey.value += 1;
-};
-
-const showButton = (params) => {
-  hasMultipleSelection.value = params.show
-  docIds.value = params.signLinkDocIds
-  if (params.showModal) {
-    action.value = 'delete'
-    isDeleteOrRestore.value = params?.showModal
-  }
-}
-
 const editId = ref("");
 const getDocument = (params) => {
-  getUserDocument(params.id);
-
-  if (params.isView && params.status == "Sent") {
+  if (params.isView && (params.status == "Sent" || params.status == "Completed")) {
     return route.push({ name: "document.audit", params: { document_id: params.id } });
   }
 
   if (params.isEdit === true) {
-    return (window.location.href =
-      redirectToESign.value + "?qt=" + token.value + "&di=" + params.id + "&ed=1");
+    return route.push({ name: "document.edit", params: { document_id: params.id } });
   }
 
+  getUserDocument(params.id);
   isLoading.value = isHidden.value = true;
   editId.value = params.id;
   setTimeout(() => (isLoading.value = false), 2000);
@@ -422,7 +419,11 @@ const checkAll = () => {
 
 const updateCheckAll = () => {
   hasMultipleSelection.value = docIds.value.length - 1 >= 0 ? true : false;
-  isCheckAll.value = (docIds.value.length == documentsByStatus.value.length) ? true : false
+  if (docIds.value.length == documentsByStatus.value.length) {
+    isCheckAll.value = true;
+  } else {
+    isCheckAll.value = false;
+  }
 };
 
 const action = ref("");
@@ -468,7 +469,6 @@ const dateTime = (value) => {
 
 const theId = ref("");
 onUpdated(() => {
-  redirectToESign.value = process.env.VUE_APP_URL_E_SIGN;
   theId.value = dashboard.value.status;
   setTimeout(() => {
     if ($.fn.dataTable.isDataTable("#" + theId.value)) {
@@ -490,8 +490,13 @@ onUpdated(() => {
 });
 
 onMounted(() => {
+  // getUserDocuments(token.value);
   getUserPrints(token.value);
+  // getReceivedDocuments(token.value);
   getUserDocumentByStatus(dashboard.value.status);
+  // setTimeout(() => {
+  //   getDeletedDocuments(token.value);
+  // }, 500);
 });
 </script>
 

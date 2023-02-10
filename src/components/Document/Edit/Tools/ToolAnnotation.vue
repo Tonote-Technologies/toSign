@@ -1,126 +1,146 @@
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
-  <Vue3DraggableResizable v-if="sign64 == null" :key="tool.id" :initH="tool.tool_name != 'Photo' ? 30 : 100"
+  <Vue3DraggableResizable v-if="tool.append_print == null" :key="tool.id" :initH="tool.tool_name == 'Photo' ? 100 : 30"
     :initW="Number(tool.tool_width)" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" v-model:x="x"
-    v-model:y="y" :parent="true" :draggable="profile?.id" :resizable="false" @drag-end="dragEnd($event, tool)"
-    class="image-area" :handles="['tl', 'tr', 'bl', 'br']" :class="tool.tool_class">
-
-    <div @click="getUserId(tool)">
+    v-model:y="y" :parent="true"
+    :draggable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true" :resizable="false"
+    @drag-end="dragEnd($event, tool)" class="image-area" :class="tool.tool_class">
+    <div class="h-100" :style="{
+      outline:
+        '2px solid ' +
+        ((owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
+          ? '#28C76F'
+          : hex.code),
+    }" @click="getUserId(tool)">
       <div v-if="tool.tool_name == 'Photo'">
         <img src="@/assets/noimage.png" class="img-fluid" alt="Preview" />
       </div>
-      <div v-if="tool.tool_name == 'Textarea'">
-        <input type="text" v-model="tool.value" class="textareaTool w-100 h-100" :data-id="tool.id"
-          @blur="textInput($event.target, x, y)" placeholder="Input text here" required
-          style="border: none; outline: none" />
-      </div>
-      <div v-if="tool.tool_name == 'Signature'"
-        class="bg-fill w-100 h-100 d-flex justify-content-center align-items-center">
+      <div v-else class="bg-fill w-100 h-100 d-flex justify-content-center align-items-center">
         {{ tool.tool_name }}
       </div>
     </div>
 
-    <span class="drag-me">
-      <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
-        <MoveIcon />
-      </span>
+    <template v-if="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true">
+      <span class="drag-me">
+        <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
+          <MoveIcon />
+        </span>
 
-      <span v-if="profile?.id" title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
-        @click="remove({ id: tool.id, can_delete: tool.can_delete_tool })">
-        <DeleteIcon />
+        <span title="Remove" class="btn btn-xs btn-secondary rounded-0 remove" @click="remove({ toolId: tool.id })"
+          :data-id="tool.id">
+          <DeleteIcon />
+        </span>
       </span>
-    </span>
+    </template>
+    <ParticipantName :userId="tool.user_id" @code="code" />
   </Vue3DraggableResizable>
-  <Vue3DraggableResizable v-else :initH="Number(tool.tool_height)" :initW="Number(tool.tool_width)" :minW="70"
+  <Vue3DraggableResizable v-else :initW="Number(tool.tool_width)" :initH="Number(tool.tool_height)" :minW="95"
     :minH="30" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y"
-    v-model:h="h" v-model:w="w" :draggable="profile?.id" :resizable="profile?.id" @drag-end="dragEnd($event, tool)"
-    @resize-end="resizeEnd(tool, w, h)" class="image-area" :handles="['tl', 'tr', 'bl', 'br']"
+    v-model:h="toolHeight" v-model:w="toolWidth" @drag-end="dragEnd($event, tool)"
+    @resize-end="resizeEnd(tool, toolWidth, toolHeight)"
+    :draggable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
+    :resizable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
+    :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
+    :lockAspectRatio="['Seal', 'Stamp'].includes(tool.tool_name) ? true : false" :handles="['tl', 'tr', 'bl', 'br']"
     class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
-    class-name-resizing="resizing-class" @dblclick="
-      getUserId(tool)
-    ">
-
-    <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.value" class="textareaTool w-100 h-100"
-      :data-id="tool.id" @blur="textInput($event.target, x, y)" placeholder="Input text here" required
-      style="border: none; outline: none" />
+    class-name-resizing="resizing-class">
+    <textarea v-if="tool.tool_name == 'Textarea'" v-model="tool.append_print.value" class="textareaTool w-100 h-100"
+      @blur="textInput($event.target, tool)" placeholder="Input text here" :style="{
+        '--placeholder-color':
+          (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
+            ? '#28C76F'
+            : hex.code,
+      }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false"></textarea>
+    <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.append_print.value" class="textareaTool h-100"
+      @blur="textInput($event.target, tool)" placeholder="Input text here"
+      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" :style="{
+        '--placeholder-color':
+          (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
+            ? '#28C76F'
+            : hex.code,
+      }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false" /> -->
 
     <template v-else>
       <div class="grid" v-if="isToolLoading.id == tool.id && isToolLoading.active">
         <span class="spinner-border" role="status"></span>
       </div>
-      <img v-else :src="tool.value" @contextmenu.prevent="false" class="w-100 h-100" style="object-fit: scale-down" />
+      <img v-else :src="b64" @contextmenu.prevent="false" :style="[
+        ['Draw', 'Upload', 'Type'].includes(tool.append_print.category)
+          ? 'object-fit: scale-down'
+          : '',
+      ]" />
     </template>
 
-    <span class="drag-me">
-      <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
-        <MoveIcon />
-      </span>
+    <template v-if="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true">
+      <span class="drag-me">
+        <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
+          <MoveIcon />
+        </span>
 
-      <span title="Edit" class="btn btn-xs btn-secondary rounded-0 edit" @click="getUserId(tool)">
-        <EditIcon />
-      </span>
+        <span v-if="tool.tool_name != 'Textarea'" title="Edit" class="btn btn-xs btn-secondary rounded-0 edit"
+          @click="getUserId(tool)">
+          <EditIcon />
+        </span>
 
-      <span v-if="profile?.id" title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
-        @click="remove({ id: tool.id })">
-        <DeleteIcon />
+        <span title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
+          @click="remove({ printId: tool.append_print.id, toolId: tool.id })" :data-id="tool.id">
+          <DeleteIcon />
+        </span>
       </span>
-    </span>
+    </template>
+    <ParticipantName :userId="tool.user_id" @code="code" />
   </Vue3DraggableResizable>
 
   <Teleport to="body">
-    <ModalComp :show="affixModal" :footer="false" @close="affixModal = false">
-      <template #header>
-        <h4 class="modal-title">Create your signature</h4>
-      </template>
-
-      <template #body>
-        <LeftTabWrapper>
-          <LeftTabList title="Draw">
-            <SignaturePad @close="swapModal" />
-          </LeftTabList>
-
-          <LeftTabList title="Select">
-            <SignatureSelectFull @close="swapModal" />
-          </LeftTabList>
-
-          <LeftTabList title="Initial">
-            <SignatureSelectInitial @close="swapModal" />
-          </LeftTabList>
-
-          <LeftTabList title="Upload">
-            <div class="row">
-              <div class="col-md-12 mx-auto position-relative">
-                <SignatureUpload @close="swapModal" />
-              </div>
-            </div>
-          </LeftTabList>
-        </LeftTabWrapper>
-        <div class="row">
-          <div class="col-md-10 ms-auto mt-2">
-            <p class="fw-normal">
-              By clicking create, I agree that all signatures, marks or initials created
-              here are as valid as my hand written signature to the extent allowed by law.
-            </p>
-          </div>
-        </div>
-      </template>
-    </ModalComp>
-  </Teleport>
-
-  <Teleport to="body">
-    <ModalComp :show="signatureListModal" :footer="false" :size="'modal-sm'" @close="signatureListModal = false">
+    <ModalComp :show="affixModal" :footer="false" :size="'modal-lg'" @close="affixModal = false">
       <template #header>
         <h4 class="modal-title">Signature box</h4>
       </template>
 
       <template #body>
-        <SignatureList @selectedSignature="savePrint" />
+        <SignaturePrintFull @selectedSignature="savePrint" @closeModal="affixModal = false" />
       </template>
     </ModalComp>
   </Teleport>
 
   <Teleport to="body">
-    <ModalComp :show="uploadImage" :footer="false" :size="'modal-md'" @close="uploadImage = false">
+    <ModalComp :show="initialModal" :footer="false" :size="'modal-md'" @close="initialModal = false">
+      <template #header>
+        <h4 class="modal-title">Initial signature box</h4>
+      </template>
+
+      <template #body>
+        <SignaturePrintInitial @selectedSignature="savePrint" @closeModal="initialModal = false" />
+      </template>
+    </ModalComp>
+  </Teleport>
+
+  <Teleport to="body">
+    <ModalComp :show="sealModal" :footer="false" :size="'modal-md'" @close="sealModal = false">
+      <template #header>
+        <h4 class="modal-title">Seal box</h4>
+      </template>
+
+      <template #body>
+        <SealAppend @close="sealModal = false" @selectedSeal="savePrint" />
+      </template>
+    </ModalComp>
+  </Teleport>
+
+  <Teleport to="body">
+    <ModalComp :show="stampModal" :footer="false" :size="'modal-md'" @close="stampModal = false">
+      <template #header>
+        <h4 class="modal-title">Stamp box</h4>
+      </template>
+
+      <template #body>
+        <StampAppend @close="stampModal = false" @selectedStamp="savePrint" />
+      </template>
+    </ModalComp>
+  </Teleport>
+
+  <Teleport to="body">
+    <ModalComp :show="uploadImage" :footer="false" :size="'modal-lg'" @close="uploadImage = false">
       <template #header>
         <h4 class="modal-title">Image management</h4>
       </template>
@@ -134,119 +154,117 @@
 
 <script setup>
 import ModalComp from "@/components/ModalComp.vue";
-import SignaturePad from "@/components/Signature/SignaturePad.vue";
-import SignatureSelectFull from "@/components/Signature/SignatureTextFull.vue";
-import SignatureSelectInitial from "@/components/Signature/SignatureTextInitial.vue";
-import SignatureUpload from "@/components/Signature/SignatureUpload.vue";
-import SignatureList from "@/components/Signature/SignatureList.vue";
-import LeftTabList from "@/components/Tab/TabLeftNav/LeftTabList.vue";
-import LeftTabWrapper from "@/components/Tab/TabLeftNav/LeftTabWrapper.vue";
+import SealAppend from "@/components/Notary/Seal/SealAppend.vue";
+import StampAppend from "@/components/Notary/Stamp/StampAppend.vue";
+import SignaturePrintFull from "@/components/Signature/SignaturePrintFull.vue";
+import SignaturePrintInitial from "@/components/Signature/SignaturePrintInitial.vue";
 import PassportPhotograph from "@/components/Passport/PassportPhotograph.vue";
-import MoveIcon from "@/icons/MoveIcon.vue"
-import EditIcon from "@/icons/EditIcon.vue"
-import DeleteIcon from "@/icons/DeleteIcon.vue"
+import ParticipantName from "@/components/Document/Edit/ParticipantName.vue";
+import MoveIcon from "@/icons/MoveIcon.vue";
+import EditIcon from "@/icons/EditIcon.vue";
+import DeleteIcon from "@/icons/DeleteIcon.vue";
 
-import { useDragResizeComposable } from '@/composables/useDragResize';
-
-import { ref, defineProps, defineEmits, watch } from "vue";
+import { ref, defineProps, defineEmits, watch, onMounted } from "vue";
 import { useActions, useGetters } from "vuex-composition-helpers/dist";
+import { useToast } from "vue-toast-notification";
 
-const { dragEnd, resizeEnd } = useDragResizeComposable()
+import { useDragResizeComposable } from "@/composables/useDragResize";
+import { useConvertToBase64Composable } from "@/composables/useDataURL";
+const { dragEnd, resizeEnd } = useDragResizeComposable();
 
-const props = defineProps({ tool: Object, owner: Object });
+const { toBase64 } = useConvertToBase64Composable();
 
-const { link, profile, isToolLoading } = useGetters({
+const toast = useToast();
+const props = defineProps({ tool: Object, owner: Object, comp: String });
+
+const { profile, isToolLoading } = useGetters({
   profile: "auth/profile",
-  isToolLoading: "signLink/isToolLoading",
-  link: "signLink/link",
+  isToolLoading: "document/isToolLoading",
 });
 
 const { editTools } = useActions({
-  editTools: "signLink/editTools",
+  editTools: "document/editTools",
 });
 
-const sign64 = ref(props.tool.value)
-watch(() => props.tool.value,
-  (newTool) => {
-    if (newTool) {
-      sign64.value = newTool
+const hex = ref("");
+const code = (params) => (hex.value = params);
+
+const toolWidth = ref(0);
+const toolHeight = ref(0);
+const b64 = ref("");
+watch(
+  () => props.tool,
+  (newTool, oldTool) => {
+    if (newTool != oldTool) {
+      toolWidth.value = Number(newTool.tool_width);
+      toolHeight.value = Number(newTool.tool_height);
+      if (newTool.append_print != null) {
+        toBase64(newTool.append_print.file, (dataUrl) => {
+          if (dataUrl != "") {
+            b64.value = dataUrl;
+          }
+        });
+      }
     }
-  })
+  },
+  { deep: true }
+);
 
 const x = ref(Number(props.tool.tool_pos_left));
 const y = ref(Number(props.tool.tool_pos_top));
-const w = ref(Number(props.tool.tool_width));
-const h = ref(Number(props.tool.tool_height));
 
-const affixModal = ref(false);
-const signatureListModal = ref(false);
+const documentId = ref(null);
+const sealModal = ref(false);
+const stampModal = ref(false);
 const initialModal = ref(false);
+const affixModal = ref(false);
 const uploadImage = ref(false);
 const toolId = ref(null);
 
-const swapModal = () => {
-  affixModal.value = false
-  signatureListModal.value = true
-}
-
 const getUserId = (params) => {
-  console.log('params', params)
+  if (props.comp == 'audit') return;
+  const toaster = (message) => {
+    toast.error(message, {
+      timeout: 5000,
+      position: "top-right",
+    });
+  };
+
+  if (params.user_id != profile.value.id) {
+    if (params.tool_name == "Signature" || params.tool_name == "Initial")
+      return toaster("Sorry, you are not permitted to sign here");
+    if (params.tool_name == "Seal") return toaster("Sorry, you cannot upload this seal");
+    if (params.tool_name == "Stamp")
+      return toaster("Sorry, you cannot upload this stamp");
+    if (params.tool_name == "Photo")
+      return toaster("Sorry, you cannot upload this passport");
+  }
+
+  if (params.tool_name == "Seal") sealModal.value = true;
+  if (params.tool_name == "Stamp") stampModal.value = true;
   if (params.tool_name == "Initial") initialModal.value = true;
   if (params.tool_name == "Signature") affixModal.value = true;
   if (params.tool_name == "Photo") uploadImage.value = true;
 
+  documentId.value = params.document_upload_id;
   toolId.value = params.id;
 };
 
-const textInput = (e) => {
-  editTools({
-    id: e.dataset.id,
-    payload: {
-      document_id: props.tool?.document_id,
-      document_upload_id: props.tool.document_upload_id,
-      tool_pos_left: x.value.toString(),
-      tool_pos_top: y.value.toString(),
-      value: e.value,
-    }
-  });
+const textInput = (e, params) => {
+  const data = {
+    append_print_id: params.append_print.id,
+    document_upload_id: params.document_upload_id,
+    value: e.value,
+    type: "Text",
+    category: "Type",
+    tool_width: textWidth.value.toString(),
+  };
+  editTools({ id: params.id, payload: data });
 };
 
 const savePrint = (params) => {
-  if (params.category == "Draw") {
-    params.tool_width = "100";
-    params.tool_height = "50";
-  } else if (params.category == "Type") {
-    params.tool_width = "150";
-    params.tool_height = "40";
-  } else if (params.category == "Initial") {
-    params.tool_width = "80";
-    params.tool_height = "40";
-  } else if (params.tool_name == "Signature" && params.category == "Upload") {
-    params.tool_width = "100";
-    params.tool_height = "62";
-  }
-
-  const dataObj = {
-    document_id: props.tool?.document_id ?? link.value.id,
-    document_upload_id: props.tool?.document_upload_id,
-    id: props.tool?.id,
-    signed: false,
-    tool_class: params.tool_name == 'Photo' ? 'main-element photo-style' : "tool-box main-element",
-    tool_height: params.tool_height,
-    tool_name: params.tool_name,
-    tool_pos_left: props.tool.tool_pos_left,
-    tool_pos_top: props.tool.tool_pos_top,
-    tool_width: params.tool_width,
-    value: params.value,
-  }
-
-  if (profile.value?.id != undefined) {
-    console.log('dataObj', dataObj)
-    editTools({ id: toolId.value, payload: dataObj });
-  } else {
-    editTools({ id: toolId.value, payload: dataObj });
-  }
-  affixModal.value = signatureListModal.value = uploadImage.value = false
+  params.document_upload_id = documentId.value;
+  editTools({ id: toolId.value, payload: params });
 };
 
 const emit = defineEmits(["remove"]);
@@ -254,9 +272,78 @@ const remove = (params) => {
   emit("remove", params);
 };
 
+const textWidth = ref(120)
+const autoResize = {
+  minWidth: 120,
+  maxWidth: 600,
+  buffer: 0,
+
+  resize: function (el) {
+    const test = document.createElement('pre');
+    test.className = 'input-test';
+    test.innerHTML = el.value;
+    el.parentNode.appendChild(test);
+    const calculatedWidth = Math.min(Math.max(test.offsetWidth + this.buffer, this.minWidth), this.maxWidth)
+    el.parentElement.style.width = el.style.width = calculatedWidth + 'px';
+    textWidth.value = calculatedWidth
+    el.parentNode.removeChild(test);
+  },
+
+  init: function () {
+    let els = document.getElementsByClassName('textareaTool'),
+      i = els.length;
+
+    while (i--) {
+      els[i].addEventListener('keydown', function () {
+        autoResize.resize(this);
+      }, false);
+
+      els[i].addEventListener('keyup', function () {
+        autoResize.resize(this);
+      }, false);
+
+      this.resize(els[i]);
+    }
+  }
+};
+
+onMounted(() => {
+  autoResize.init();
+
+  if (props.tool.append_print != null) {
+    toBase64(props.tool.append_print.file, (dataUrl) => {
+      if (dataUrl != "") {
+        b64.value = dataUrl;
+      }
+    });
+  }
+});
 </script>
 
+<style>
+.input-test {
+  display: inline;
+  visibility: hidden;
+}
+</style>
+
 <style scoped>
+textarea::-webkit-input-placeholder {
+  color: var(--placeholder-color);
+}
+
+input:-moz-placeholder {
+  color: var(--placeholder-color);
+}
+
+textarea::-moz-placeholder {
+  color: var(--placeholder-color);
+}
+
+textarea:-ms-input-placeholder {
+  color: var(--placeholder-color);
+}
+
 .z-indexed {
   z-index: 1;
 }

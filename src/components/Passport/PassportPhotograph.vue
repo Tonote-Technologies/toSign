@@ -2,22 +2,17 @@
   <div v-if="appendPass === true">
     <div class="d-flex justify-content-between align-items-center flex-column mt-2" style="height: 35vh">
       <div class="grid grid__3">
-        <div class="w-100">
-          <label v-for="(print, index) in prints" :key="index" class="form-check-label border position-relative"
-            :for="print.category">
-            <div v-if="print.type === 'Photograph'" @click="
-              getPrintId({ file: print.file, category: print.category, type: print.type })
-            ">
-              <input type="radio" :name="print.category" v-model="selected" class="form-check-input tool_name"
-                :id="print.category" :value="print.category" />
-              <img :src="print.file" class="img-fluid" :alt="print.category" />
-
-              <span @click="deletePrint(index)"
-                class="btn-outline-danger position-absolute top-0 start-100 translate-middle"
-                style="padding:1px 4px">&cross;</span>
-            </div>
-          </label>
-        </div>
+        <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border" :for="photo.id">
+          <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
+            <template v-if="photo.user_id">
+              <div class="position-relative">
+                <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name" :id="photo.id"
+                  :value="photo.id" />
+                <img :src="photo.file" class="img-fluid" :alt="photo.id" />
+              </div>
+            </template>
+          </div>
+        </label>
       </div>
 
       <div class="modal-footer w-100">
@@ -34,37 +29,35 @@
     <TopTabWrapper>
       <TopTabList title="Select">
         <div class="d-flex justify-content-between align-items-center flex-column" style="min-height: 18rem">
-          <template v-if="prints.length > 0">
-            <div v-for="(print, index) in prints" :key="index">
-              <label v-if="print.type === 'Photograph'" class="form-check-label border position-relative"
-                :for="print.category">
-                <div @click="
-                  getPrintId({ file: print.file, category: print.category, type: print.type })
-                ">
-                  <input type="radio" :name="print.category" v-model="selected" class="form-check-input tool_name"
-                    :id="print.category" :value="print.category" />
-                  <img :src="print.file" class="img-fluid" :alt="print.category" />
-
-                  <span @click="deletePrint(index)"
-                    class="btn-outline-danger position-absolute top-0 start-100 translate-middle"
-                    style="padding:1px 4px">&cross;</span>
+          <template v-if="prints.Photograph">
+            <div class="grid grid__3">
+              <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border"
+                :for="photo.id">
+                <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
+                  <template v-if="photo.user_id">
+                    <div class="position-relative">
+                      <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name"
+                        :id="photo.id" :value="photo.id" />
+                      <img :src="photo.file" class="img-fluid" :alt="photo.id" />
+                      <a role="button" @click="deletePassport(photo.id)"
+                        class="text-danger btn-close d-block text-end delete"></a>
+                    </div>
+                  </template>
                 </div>
               </label>
             </div>
           </template>
-          <template v-else>
+          <div v-else>
             <p class="grid grid__1 text-center" style="height: 20vh">
               <i>kindly create a passport photograph!</i>
             </p>
-          </template>
-
-          <div class="modal-footer justify-content-center w-100 mt-2 pb-0">
-            <button type="button" class="btn btn-sm btn-primary" :class="{ disabled: !isSelected }"
-              @click="affixPassport">
-              <span v-show="isLoading" class="spinner-border spinner-border-sm"></span>
-              <span>Append</span>
-            </button>
           </div>
+
+          <button type="button" class="btn btn-sm btn-primary d-block ms-auto" :class="{ disabled: !isSelected }"
+            @click="affixPassport">
+            <span v-show="isLoading" class="spinner-border spinner-border-sm"></span>
+            <span>Append</span>
+          </button>
         </div>
       </TopTabList>
 
@@ -113,7 +106,7 @@
             </button>
           </div>
 
-          <PassportCamera v-if="isCameraOpen" @close="closeSnap" @getFile="getPrintId" @affix="affixPassport" />
+          <PassportCamera v-if="isCameraOpen" @close="closeSnap" @affix="affixPassport" />
         </div>
       </TopTabList>
     </TopTabWrapper>
@@ -147,22 +140,21 @@ import { Icon } from "@iconify/vue";
 import DropZone from "@/components/DropZone.vue";
 import { Cropper } from "vue-advanced-cropper";
 import "vue-advanced-cropper/dist/style.css";
+
+import { ref, defineEmits } from "vue";
+
+import { createNamespacedHelpers } from "vuex-composition-helpers/dist";
 import PassportCamera from "@/components/Passport/PassportCamera.vue";
+
 import TopTabList from "@/components/Tab/TabTopNav/TopTabList.vue";
 import TopTabWrapper from "@/components/Tab/TabTopNav/TopTabWrapper.vue";
 import ModalComp from "@/components/ModalComp.vue";
 
-import { ref, defineEmits } from "vue";
-import { useActions, useGetters } from "vuex-composition-helpers/dist";
+const { useActions, useGetters } = createNamespacedHelpers("print");
 
-const { prints } = useGetters({
-  prints: "printSignLink/prints",
-});
-
-const { savePrint, removePrint } = useActions({
-  savePrint: "printSignLink/savePrint",
-  removePrint: "printSignLink/removePrint",
-});
+const { prints } = useGetters(["prints"]);
+const { savePrint } = useActions(["savePrint"]);
+const { removePrint } = useActions(["removePrint"]);
 
 const dropzoneFile = ref("");
 const preview = ref(null);
@@ -174,7 +166,6 @@ const isLoading = ref(false);
 const loading = ref(false);
 const isDelete = ref(false);
 const printId = ref("");
-const theFile = ref("");
 const selectedTitle = ref(false);
 const isCameraOpen = ref(false);
 
@@ -182,6 +173,7 @@ const croppedData = ref("");
 const change = ({ canvas }) => {
   croppedData.value = canvas.toDataURL();
 }
+
 
 const preparedFile = (file) => {
   let reader = new FileReader();
@@ -231,14 +223,13 @@ const emit = defineEmits(["close"]);
 const uploadPhotograph = () => {
   isUpload.value = false;
   const uploadPassport = {
-    file: preview.value,
+    file: croppedData.value,
     type: "Photograph",
-    category: "Passport",
+    category: "Upload",
   };
 
   savePrint(uploadPassport);
   selectedTitle.value = true;
-  // closeSnap()
 
   loading.value = true;
   isSelected.value = false;
@@ -249,24 +240,26 @@ const uploadPhotograph = () => {
   }, 1000);
 };
 
-const deletePrint = (params) => {
-  removePrint(params)
-}
-
 const getPrintId = (params) => {
   isSelected.value = true;
-  theFile.value = params.file;
+  printId.value = params.print_id;
 };
 
 const toggleCamera = () => {
   isCameraOpen.value = !isCameraOpen.value
 };
 
-const affixPassport = () => {
-
-  const uploadPassport = { tool_name: 'Photo', value: theFile.value, };
+const affixPassport = (params) => {
+  const uploadPassport = {
+    append_print_id: params.append_print_id != undefined ? params.append_print_id : printId.value,
+    tool_name: "Photo",
+    tool_class: "main-element photo-style",
+    tool_width: "100",
+    tool_height: "100",
+  };
 
   emit("selectedPassport", uploadPassport);
+  emit("close", true);
 
   isLoading.value = true;
   isSelected.value = false;
@@ -275,14 +268,11 @@ const affixPassport = () => {
   }, 1000);
 };
 
-// const fromSnap = (params) => {
-//   const uploadPassport = { append_print_id: params.append_print_id };
-
-//   emit("selectedPassport", uploadPassport);
-
-//   loading.value = true;
-//   setTimeout(() => { loading.value = false }, 1000);
-// };
+const deletePassport = (params) => {
+  isSelected.value = false;
+  isDelete.value = true;
+  printId.value = params;
+};
 
 const proceedToDelete = () => {
   isLoading.value = false;

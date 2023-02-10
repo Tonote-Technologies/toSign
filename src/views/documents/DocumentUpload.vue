@@ -5,7 +5,7 @@
 
   <section class="container-fluid" v-else>
     <div class="email-header-left d-flex align-items-center mb-2 fw-bold" style="font-size: 1rem">
-      <router-link :to="{ name: 'Document' }" role="button" @click="$router.go(-1)" class="back">
+      <router-link :to="{ name: 'Dashboard' }" role="button" @click="$router.go(-1)" class="back">
         <span class="go-back me-1 float-start">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -48,6 +48,8 @@
                 Upload more
               </label>
             </template>
+
+            <p class="my-2 fw-bolder text-dark">Up to 20 files, Max 2 MB each.</p>
           </div>
         </div>
 
@@ -55,12 +57,17 @@
           <div class="p-2">
             <div class="row align-items-center">
               <div class="col-auto">
-                <img data-dz-thumbnail src="@/assets/default.png" class="avatar-sm rounded bg-light" :alt="prev" />
+                <img data-dz-thumbnail src="@/assets/default.png" class="avatar-sm rounded bg-light"
+                  :alt="prev.file.name" />
               </div>
 
               <div class="col ps-0">
                 <a href="javascript:void(0)" class="text-muted fw-bold" data-dz-name></a>
-                <p class="mb-0" data-dz-size>{{ prev }}</p>
+                <p class="mb-0" data-dz-size>{{ prev.file.name }} | Size:
+                  <span :class="[prev.file.size > 2097152 ? 'text-danger' : 'text-success']">
+                    {{ prev.size }}
+                  </span>
+                </p>
               </div>
 
               <div class="col-auto">
@@ -95,11 +102,14 @@ import { useRouter } from "vue-router";
 
 import { useActions, useGetters } from "vuex-composition-helpers/dist";
 
+import { useToast } from "vue-toast-notification";
+const toast = useToast();
+
 const { token } = useGetters({ token: "auth/token" });
 
 const { setAuthForDocumentUpload, fileUploads, getUserPrints } = useActions({
   setAuthForDocumentUpload: "auth/setAuthForDocumentUpload",
-  fileUploads: "signLink/fileUploads",
+  fileUploads: "document/fileUploads",
   getUserPrints: "print/getUserPrints",
 });
 
@@ -111,15 +121,30 @@ const previewFile = ref([]);
 const dataFile = ref([]);
 const title = ref("");
 
+function formatBytes(bytes, decimals = 2) {
+  if (!+bytes) return '0 Bytes'
+
+  const k = 1024
+  const dm = decimals < 0 ? 0 : decimals
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+}
+
 dataFile.value = [];
 previewFile.value = [];
 const preparedFile = (files) => {
   for (let i = 0; i < files.length; i++) {
     let reader = new FileReader();
     const params = files[i];
+
+    const fileSize = formatBytes(params.size)
+
     reader.onloadend = () => {
       dataFile.value.push(reader.result);
-      previewFile.value.push(params.name);
+      previewFile.value.push({ file: params, size: fileSize });
     };
     reader.readAsDataURL(params);
   }
@@ -153,18 +178,30 @@ const removeItem = (index) => {
 };
 
 const onProceed = (params) => {
-  isSubmitted.value = true;
   const uploadFile = {
     files: toRaw(dataFile.value),
     title: params.title,
   };
+
+  for (let i = 0; i < previewFile.value.length; i++) {
+    const element = previewFile.value[i];
+
+    if (element.file.size > 2097152) {
+      return toast.error("Uploaded file size (" + element.size + ") is more than 2 MB", {
+        timeout: 5000,
+        position: "top-right",
+      });
+    }
+  }
+
+  isSubmitted.value = true;
 
   fileUploads(uploadFile);
   dataFile.value = [];
   previewFile.value = [];
   setTimeout(() => {
     isSubmitted.value = false;
-  }, 10000);
+  }, 30000);
 };
 
 const route = useRouter();

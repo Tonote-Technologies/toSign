@@ -4,5 +4,6 @@ export default {
   profile: null,
   resendOTP: null,
   OTPFlag: {},
+  loader: false,
   errors: [],
 };

@@ -10,6 +10,16 @@
       </span>
     </div>
 
+    <div class="form-check my-2">
+      <input class="form-check-input" type="checkbox" value="" id="invalidCheck" @change="handleCheck($event)"
+        :checked="isChecked">
+      <label class="form-check-label" for="invalidCheck">
+        I agree to
+        <a href="https://gettonote.com/privacy" target="_blank">privacy policy</a> and
+        <a href="https://gettonote.com/terms" target="_blank">terms</a>
+      </label>
+    </div>
+
     <p class="text-secondary small mb-0" :class="[newPassword.length > 7 ? 'text-success' : 'text-danger']">
       <Icon icon="carbon:dot-mark" /> At least 8 characters
     </p>
@@ -27,9 +37,13 @@
     </p>
   </div>
 
-  <div class="row mt-3">
-    <div class="col-12">
-      <button class="btn btn-sm btn-primary d-block ms-auto" @click="changePassword" :disabled="!valid_password">
+  <div class="mt-2">
+    <div class="modal-footer" style="padding: 1rem 0 0.3rem">
+      <button class="btn btn-sm btn-secondary" @click="$emit('save', false)">
+        <span v-show="loading" class="spinner-border spinner-border-sm"></span>
+        No
+      </button>
+      <button class="btn btn-sm btn-primary" @click="changePassword" :disabled="!valid_password || !isChecked">
         <span v-show="loading" class="spinner-border spinner-border-sm"></span>
         Save
       </button>
@@ -62,6 +76,11 @@ const has_number = ref(false);
 const has_lowercase = ref(false);
 const has_uppercase = ref(false);
 const has_special = ref(false);
+
+const isChecked = ref(false);
+const handleCheck = (e) => {
+  isChecked.value = e.target.checked ?? false;
+};
 
 const changePassword = () => {
   if (valid_password.value == false) return

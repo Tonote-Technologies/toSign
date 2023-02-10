@@ -12,9 +12,15 @@ export const canCancel = (state) => { return state.cancel };
 
 export const doneDocument = (state) => { return state.doneEditing };
 
+export const userFeedback = (state) => { return state.feedback };
+
 export const workingTools = (state) => { return state.resourceTools };
 
 export const isOpenModal = (state) => { return state.isOpenModal };
+
+export const guest = (state) => { return state.guest };
+
+export const confirmGuest = (state) => { return state.confirmGuest };
 
 export const isDoneLoading = (state) => { return state.isDoneLoading };
 

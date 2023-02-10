@@ -39,39 +39,37 @@
       </div>
     </div>
 
-    <button v-if="isSelected != ''" class="btn btn-primary icon my-2" @click="snapshot" :disabled="spinner">
+    <button v-if="isSelected != ''" class="btn btn-primary icon my-2" @click="takeSnapshot" :disabled="spinner">
       <span class="iconify" data-icon="fluent:camera-20-filled">
         <span v-show="spinner" class="spinner-border spinner-border-sm text-white"></span>
         <Icon v-show="!spinner" icon="mdi-light:camera" />
       </span>
     </button>
 
-    <template v-if="prints.length > 0">
-      <div class="d-flex justify-content-center mt-3" v-for="(print, index) in prints" :key="index">
-        <label v-if="print.type === 'Photograph'" class="form-check-label border position-relative" style="width:150px"
-          :for="print.type">
-          <div @click="
-            getPrintId({ file: print.file, category: print.category, type: print.type })
-          ">
-            <input type="radio" :name="print.type" v-model="selected" class="form-check-input tool_name"
-              :id="print.type" :value="print.category" />
-            <img :src="print.file" class="img-fluid" :alt="print.category" />
+    <template v-if="prints.Photograph">
+      <div class="grid grid__3 mt-2">
+        <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border custom-width"
+          :for="photo.created_at">
+          <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
+            <template v-if="photo.user_id">
+              <div class="position-relative">
+                <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name pass"
+                  :id="photo.created_at" :value="photo.id" />
 
-            <span @click="deletePrint(index)"
-              class="btn-outline-danger position-absolute top-0 start-100 translate-middle"
-              style="padding:1px 4px">&cross;</span>
+                <img :src="photo.file" class="img-fluid" :alt="photo.id" />
+                <a role="button" @click="deletePassport(photo.id)"
+                  class="text-danger btn-close d-block text-end delete"></a>
+              </div>
+            </template>
           </div>
         </label>
       </div>
 
-      <img :src="url" class="img-fluid d-none" alt="..." />
-
-      <div class="modal-footer justify-content-center w-100 mt-2 pb-0">
-        <button type="button" class="btn btn-sm btn-primary" :class="{ disabled: !isDisabled }" @click="affixSnap">
-          <span v-show="isLoading" class="spinner-border spinner-border-sm"></span>
-          <span>Append</span>
-        </button>
-      </div>
+      <button type="button" class="btn btn-sm btn-primary d-block ms-auto mt-2" :class="{ disabled: !isDisabled }"
+        @click="affixSnap">
+        <span v-show="isLoading" class="spinner-border spinner-border-sm"></span>
+        <span>Append</span>
+      </button>
     </template>
   </div>
 
@@ -109,23 +107,23 @@ import { ref, defineEmits, watch } from "vue";
 import { useActions, useGetters } from "vuex-composition-helpers/dist";
 
 const { prints, isSaved } = useGetters({
-  prints: "printSignLink/prints",
-  isSaved: "printSignLink/isSaved",
+  prints: "print/prints",
+  isSaved: "print/isSaved",
 });
 
 const { savePrint, removePrint } = useActions({
-  savePrint: "printSignLink/savePrint",
-  removePrint: "printSignLink/removePrint",
+  savePrint: "print/savePrint",
+  removePrint: "print/removePrint",
 });
 
 const spinner = ref(false);
 const isLoading = ref(false);
 const camera = ref("");
-const url = ref("");
 const timer = ref(null);
 const isTimer = ref(false);
 const isDisabled = ref(false);
 const isDelete = ref(false);
+const printId = ref("");
 const isSelected = ref('')
 const videoDevices = ref([])
 const emit = defineEmits(["close"]);
@@ -148,49 +146,60 @@ const started = () => {
 
 const getPrintId = (params) => {
   isDisabled.value = true;
-  emit("getFile", params);
+  printId.value = params.print_id;
 };
 
 const affixSnap = () => {
-  emit("affix", true);
+  const uploadPassport = { append_print_id: printId.value };
+
+  emit("affix", uploadPassport);
 
   isLoading.value = true;
   isDisabled.value = false;
   setTimeout(() => { isLoading.value = false }, 1000);
 };
 
-const deletePrint = (params) => {
-  removePrint(params)
-}
+const deletePassport = (params) => {
+  isDelete.value = true;
+  printId.value = params;
+};
+
+const proceedToDelete = () => {
+  isDisabled.value = spinner.value = true;
+  removePrint(printId.value);
+
+  setTimeout(() => {
+    isDisabled.value = spinner.value = isDelete.value = false;
+  }, 1000);
+};
 
 setTimeout(async () => {
   const devices = await camera.value?.devices();
   videoDevices.value = devices.filter(device => device.kind === 'videoinput');
 }, 3000);
 
-const changeCameraFace = () => {
-  camera.value?.changeCamera(isSelected.value);
-}
+const changeCameraFace = () => camera.value?.changeCamera(isSelected.value);
 
-const snapshot = async () => {
+const takeSnapshot = () => {
   spinner.value = isTimer.value = true;
   let counter = 3;
   timer.value = 3
-
-  await camera.value?.snapshot({ width: 160, height: 200 }, "image/png", 0.5);
-  const dataUrl = camera.value?.canvas.toDataURL("image/png");
-  const uploadPassport = {
-    file: dataUrl,
-    type: "Photograph",
-    category: "Upload",
-  };
-
+  
   const interval = setInterval(function () {
     counter--;
     timer.value = counter
     if (counter < 0) {
       clearInterval(interval);
       spinner.value = isTimer.value = false
+
+      camera.value?.snapshot({ width: 160, height: 200 }, "image/png", 0.5);
+      const dataUrl = camera.value?.canvas.toDataURL("image/png");
+      const uploadPassport = {
+        file: dataUrl,
+        type: "Photograph",
+        category: "Upload",
+      };
+
       savePrint(uploadPassport);
     }
   }, 1000);

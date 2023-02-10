@@ -5,7 +5,17 @@ import store from "@/store";
 const UserAuth = () =>
   import(/* webpackChunkName: "auth-login" */ "@/views/UserAuth.vue");
 
-const userVerification = () =>
+const LandingPage = () =>
+  import(
+    /* webpackChunkName: "landing-page" */ "@/views/LandingPage.vue"
+  );
+
+const DocumentAuditTrail = () =>
+  import(
+    /* webpackChunkName: "audit-trail" */ "@/views/documents/DocumentAuditTrail.vue"
+  );
+
+const DocumentUserVerify = () =>
   import(
     /* webpackChunkName: "auth-verify" */ "@/components/Auth/UserVerify.vue"
   );
@@ -16,21 +26,6 @@ const DocumentIndex = () =>
 const DocumentDashboard = () =>
   import(
     /* webpackChunkName: "document" */ "@/views/documents/DocumentDashboard.vue"
-  );
-
-const DocumentView = () =>
-  import(
-    /* webpackChunkName: "show-link" */ "@/views/documents/DocumentView.vue"
-  );
-
-const DocumentResponse = () =>
-  import(
-    /* webpackChunkName: "response-link" */ "@/views/documents/DocumentResponse.vue"
-  );
-
-const DocumentAuditTrail = () =>
-  import(
-    /* webpackChunkName: "audit-trail" */ "@/views/documents/DocumentAuditTrail.vue"
   );
 
 const DocumentUpload = () =>
@@ -48,84 +43,11 @@ const DocumentEdit = () =>
     /* webpackChunkName: "edit-document" */ "@/views/documents/DocumentEdit.vue"
   );
 
-const SignLink = () =>
-  import(
-    /* webpackChunkName: "sign-link" */ "@/views/documents/DocumentSignLink.vue"
-  );
-
-const NewInstanceOfSignLink = () =>
-  import(
-    /* webpackChunkName: "new-instance-sign-link" */ "@/views/CopySignLink.vue"
-  );
-
-
-const UserRegistration = () =>
-  import(
-    /* webpackChunkName: "auth-register" */ "@/components/Auth/UserRegistration.vue"
-  );
-
 const routes = [
   {
     path: "/",
     name: "Login",
     component: UserAuth,
-    meta: {
-      title: "Login | ToNote",
-      metaTags: [
-        {
-          name: "description",
-          content: "The login page of ToNote.",
-        },
-        {
-          property: "og:description",
-          content: "The login page of ToNote.",
-        },
-      ],
-    },
-  },
-
-  {
-    path: "/sign",
-    name: "Sign",
-    component: UserRegistration,
-    meta: {
-      title: "Create Link | ToNote",
-      metaTags: [
-        {
-          name: "description",
-          content: "The easy link registration page of ToNote.",
-        },
-        {
-          property: "og:description",
-          content: "The easy link registration page of ToNote.",
-        },
-      ],
-    },
-  },
-
-  {
-    path: "/verify",
-    name: "Verify",
-    component: userVerification,
-    meta: {
-      title: "Verification | ToNote",
-      metaTags: [
-        {
-          name: "description",
-          content: "The verification page of ToNote.",
-        },
-        {
-          property: "og:description",
-          content: "The verification page of ToNote.",
-        },
-      ],
-    },
-  },
-
-  {
-    path: "/to-sign/:document_id",
-    name: "NewSign",
-    component: NewInstanceOfSignLink,
     meta: {
       title: "ToNote",
     },
@@ -133,18 +55,19 @@ const routes = [
 
   {
     path: "/dashboard",
-    name: "Document",
-    component: DocumentDashboard,
+    name: "Dashboard",
+    component: LandingPage,
     meta: {
-      title: "Sign Link | Document - ToNote",
+      title: "Documents | ToNote",
+      requiresAuth: true,
       metaTags: [
         {
           name: "description",
-          content: "The easy link page of ToNote.",
+          content: "The document dashboard page of ToNote.",
         },
         {
           property: "og:description",
-          content: "The easy link page of ToNote.",
+          content: "The document dashboard page of ToNote.",
         },
       ],
     },
@@ -163,84 +86,11 @@ const routes = [
         name: "document.dashboard",
         component: DocumentDashboard,
         beforeEnter(to, from, next) {
-          next({ name: "Document" });
+          next({ name: "Dashboard" });
         },
         meta: {
           title: "User | Document - ToNote",
           requiresAuth: true,
-        },
-      },
-      {
-        path: "edit/:document_id",
-        name: "document.edit",
-        component: DocumentEdit,
-        meta: {
-          title: "Edit Document | ToNote",
-          // requiresAuth: true,
-          metaTags: [
-            {
-              name: "description",
-              content: "The document edit page of ToNote.",
-            },
-            {
-              property: "og:description",
-              content: "The document edit page of ToNote.",
-            },
-          ],
-        },
-      },
-      {
-        path: "/link/:document_id",
-        name: "Link",
-        component: SignLink,
-        meta: {
-          title: "Sign Document | ToNote",
-          metaTags: [
-            {
-              name: "description",
-              content: "The sign link page of ToNote.",
-            },
-            {
-              property: "og:description",
-              content: "The sign link page of ToNote.",
-            },
-          ],
-        },
-      },
-      {
-        path: "show/:document_id",
-        name: "document.show",
-        component: DocumentView,
-        meta: {
-          title: "View | ToNote",
-          metaTags: [
-            {
-              name: "description",
-              content: "The view link page of ToNote.",
-            },
-            {
-              property: "og:description",
-              content: "The view link page of ToNote.",
-            },
-          ],
-        },
-      },
-      {
-        path: "response",
-        name: "document.response",
-        component: DocumentResponse,
-        meta: {
-          title: "Response | ToNote",
-          metaTags: [
-            {
-              name: "description",
-              content: "The view participant response of ToNote.",
-            },
-            {
-              property: "og:description",
-              content: "The view participant response of ToNote.",
-            },
-          ],
         },
       },
       {
@@ -257,6 +107,24 @@ const routes = [
             {
               property: "og:description",
               content: "The audit trail page of ToNote.",
+            },
+          ],
+        },
+      },
+      {
+        path: "verify",
+        name: "document.verify",
+        component: DocumentUserVerify,
+        meta: {
+          title: "Verification | ToNote",
+          metaTags: [
+            {
+              name: "description",
+              content: "The verification page of ToNote.",
+            },
+            {
+              property: "og:description",
+              content: "The verification page of ToNote.",
             },
           ],
         },
@@ -294,6 +162,25 @@ const routes = [
             {
               property: "og:description",
               content: "The document setup page of ToNote.",
+            },
+          ],
+        },
+      },
+      {
+        path: "edit/:document_id",
+        name: "document.edit",
+        component: DocumentEdit,
+        meta: {
+          title: "Edit Document | ToNote",
+          requiresAuth: true,
+          metaTags: [
+            {
+              name: "description",
+              content: "The document edit page of ToNote.",
+            },
+            {
+              property: "og:description",
+              content: "The document edit page of ToNote.",
             },
           ],
         },
@@ -363,7 +250,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     const hasToken = store.getters["auth/token"];
     if (!hasToken) {
-      next({ name: 'Sign', query: { di: to.params.document_id } })
+      next({ name: 'Login' })
     } else {
       next()
     }

@@ -3,7 +3,7 @@
     <div class="navbar-header">
       <ul class="nav navbar-nav flex-row">
         <li class="nav-item me-auto">
-          <router-link class="navbar-brand" :to="{ name: 'Document' }">
+          <router-link class="navbar-brand" :to="{ name: 'Dashboard' }">
             <span class="brand-logo">
               <img src="@/assets/logo-dark.png" width="150" />
             </span>
@@ -33,8 +33,8 @@
             <span class="menu-title text-truncate">Dashboard </span></a>
         </li>
 
-        <li class="nav-item has-sub sidebar-group-active open">
-          <a class="d-flex align-items-center" role="button">
+        <li class="nav-item has-sub sidebar-group-active" :class="{ open: !isDropdownOpen }">
+          <a class="d-flex align-items-center" role="button" @click="openDropdown">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
               class="feather feather-layers" data-v-af43c274="">
@@ -122,8 +122,8 @@
               </a>
             </li>
 
-            <li :class="{ active: isPage == 'Sign' }">
-              <a class="d-flex align-items-center" role="button" @click="page('Sign')">
+            <li>
+              <a class="d-flex align-items-center" :href="redirectToSignLink + '?status=sign&qt=' + token">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                   class="feather feather-link">
@@ -131,8 +131,9 @@
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
                 </svg>
                 <span class="menu-item text-truncate">Sign link</span>
-                <span class="badge badge-light-success rounded-pill ms-auto me-1">
-                  {{ links?.length ?? 0 }}</span>
+                <p title="Coming Soon" class="coming-soon badge rounded-pill badge-light-warning">
+                  Coming Soon
+                </p>
               </a>
             </li>
           </ul>
@@ -184,17 +185,15 @@ import { useGetters, useActions } from "vuex-composition-helpers/dist";
 import { useRouter } from "vue-router";
 const route = useRouter();
 
-const { token, teams, statistics, links } = useGetters({
+const { token, teams, statistics } = useGetters({
   token: "auth/token",
   teams: "team/teams",
   statistics: "document/statistics",
-  links: "signLink/links",
 });
 
-const { getTeams, getStatistics, getLinks } = useActions({
+const { getTeams, getStatistics } = useActions({
   getTeams: "team/getTeams",
   getStatistics: "document/getStatistics",
-  getLinks: "signLink/getLinks",
 });
 
 defineProps({ open: Boolean });
@@ -204,6 +203,7 @@ function capitalizeFirstLetter(string = "") {
 }
 
 const redirectToUserDashboard = ref("");
+const redirectToSignLink = ref("");
 const count = ref("");
 const isPage = ref("");
 const plan = ref("");
@@ -217,10 +217,15 @@ watch(
   }
 );
 
+const isDropdownOpen = ref(false)
+const openDropdown = () => isDropdownOpen.value = !isDropdownOpen.value
+
 const page = (params) => {
-  isPage.value = params != "" ? params : "sign";
+  dashboard.value.setIsOpened(false)
+
+  isPage.value = params != "" ? params : "New";
   dashboard.value.setStatus(isPage.value);
-  route.push({ name: "Document", query: { status: isPage.value.toLowerCase() } });
+  route.push({ name: "Dashboard", query: { status: isPage.value.toLowerCase() } });
 };
 
 const numberOfEnvelopLeft = ref("");
@@ -231,11 +236,11 @@ const remainingEnvelops = (str, arr) => {
 };
 
 onMounted(() => {
+  redirectToSignLink.value = process.env.VUE_APP_URL_SIGN_LINK;
   redirectToUserDashboard.value = process.env.VUE_APP_URL_AUTH_LIVE;
   uri.value = capitalizeFirstLetter(route.currentRoute.value.query.status);
-  page(uri.value ? uri.value : 'Sign');
+  page(uri.value);
 
-  getLinks()
   getTeams(token.value);
   getStatistics(token.value);
 
@@ -261,6 +266,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.coming-soon {
+  display: inline-block;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .main-menu .navbar-header .navbar-brand .brand-logo img {
   max-width: 100%;
   width: auto;

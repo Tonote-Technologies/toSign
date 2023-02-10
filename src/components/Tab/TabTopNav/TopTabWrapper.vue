@@ -1,13 +1,8 @@
 <template>
   <div :class="{ tabs_light: mode === 'light', tabs_dark: mode === 'dark' }">
     <ul class="tabs_header">
-      <li
-        v-for="(title, index) in tabTitles"
-        :key="index"
-        @click="selectedTitle = title"
-        class="tab"
-        :class="{ tab__selected: title == selectedTitle }"
-      >
+      <li v-for="(title, index) in tabTitles" :key="index" @click="selectedTitle = title" class="tab"
+        :class="{ tab__selected: title == selectedTitle }">
         {{ title }}
       </li>
     </ul>
@@ -49,7 +44,7 @@ ul.tabs_header {
   padding: 0;
 }
 
-ul.tabs_header > li {
+ul.tabs_header>li {
   padding: 10px 20px;
   border-radius: 5px;
   display: inline-block;
@@ -58,7 +53,7 @@ ul.tabs_header > li {
   transition: 0.4s all ease-out;
 }
 
-ul.tabs_header > li.tab__selected {
+ul.tabs_header>li.tab__selected {
   font-weight: bold;
   border-radius: 5px;
 }
@@ -93,5 +88,11 @@ ul.tabs_header > li.tab__selected {
 .tabs_dark li.tab__selected {
   background-color: #003bb3;
   color: #fff;
+}
+
+@media screen and (max-width: 767px) {
+  ul.tabs_header>li {
+    padding: 10px;
+  }
 }
 </style>

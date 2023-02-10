@@ -9,11 +9,7 @@
 
       <div class="content-wrapper container-xxl p-0">
         <div class="content-body">
-          <router-view v-slot="{ Component }">
-            <transition-page>
-              <component :is="Component" />
-            </transition-page>
-          </router-view>
+          <router-view></router-view>
         </div>
       </div>
     </div>
@@ -28,6 +24,11 @@ import TheFooter from "@/layout/Footer/TheFooter.vue";
 </script>
 
 <style>
+.vue-star-rating {
+  justify-content: space-between;
+  width: 200px;
+}
+
 .table> :not(caption)>* {
   padding: 0.72rem 1rem;
 }

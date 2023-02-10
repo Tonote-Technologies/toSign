@@ -1,4 +1,4 @@
-import Print from "@/api/modules/Print";
+import Print from "@/api/Print";
 import { useToast } from "vue-toast-notification";
 const toast = useToast();
 

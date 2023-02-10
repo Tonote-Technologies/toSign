@@ -43,11 +43,9 @@ import {
   defineEmits,
 } from "vue";
 
-import { useActions } from "vuex-composition-helpers/dist";
-
-const { savePrint } = useActions({
-  savePrint: "printSignLink/savePrint",
-});
+import { createNamespacedHelpers } from "vuex-composition-helpers/dist";
+const {  useActions } = createNamespacedHelpers(["print"]);
+const { savePrint } = useActions(["savePrint"]);
 
 const emit = defineEmits(["close"]);
 
@@ -122,8 +120,8 @@ const props = defineProps({
 let state = reactive({
   sig: () => { },
   option: {
-    minWidth: 1,
-    maxWidth: 1,
+    minWidth: 1.5,
+    maxWidth: 1.5,
     backgroundColor: "rgb(255, 255, 255)",
     penColor: "rgb(0, 0, 0)",
   },

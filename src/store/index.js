@@ -5,7 +5,7 @@ const ls = new SecureLS({ isCompression: true });
 
 const debug = process.env.NODE_ENV !== 'production';
 const persist = {
-  paths: ['auth', 'company', 'team', 'document', 'signLink', 'printSignLink'],
+  paths: ['auth', 'company', 'team', 'document'],
   storage: {
     getItem: key => ls.get(key),
     setItem: (key, value) => ls.set(key, value),
@@ -25,8 +25,6 @@ import company from "@/store/modules/company";
 import team from "@/store/modules/team";
 import document from "@/store/modules/document";
 import print from "@/store/modules/print";
-import signLink from "@/store/modules/signLink";
-import printSignLink from "@/store/modules/printSignLink";
 import tool from "@/store/modules/tool";
 
 const modules = {
@@ -35,8 +33,6 @@ const modules = {
   team,
   document,
   print,
-  signLink,
-  printSignLink,
   tool,
 };
 
@@ -48,4 +44,3 @@ export default createStore({
   modules,
   plugins: plugins,
 });
-
