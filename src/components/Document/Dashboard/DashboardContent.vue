@@ -7,7 +7,9 @@
             <div class="d-flex justify-content-between align-items-center header-actions text-nowrap mx-1 row mt-75">
               <div class="col-sm-12 col-lg-12">
                 <div class="card-header d-flex justify-content-lg-between py-1 p-0">
-                  <h4 class="card-title text-capitalize">{{ dashboard.status }} Document</h4>
+                  <h4 class="card-title text-capitalize">
+                    {{ dashboard.status }} Document
+                  </h4>
 
                   <div class="d-none">
                     <div class="btn-group">
@@ -84,12 +86,13 @@
                           id="selectAllCheck" />
                       </th>
                       <template v-if="dashboard.status == 'Received'">
-                        <th rowspan="1" colspan="1" aria-label="Sender">
-                          Sent by
-                        </th>
+                        <th rowspan="1" colspan="1" aria-label="Sender">Sent by</th>
                       </template>
                       <th rowspan="1" colspan="1" style="width: 258px" aria-label="Name">
                         Document Name
+                      </th>
+                      <th rowspan="1" colspan="1" style="width: 348px" aria-label="Participant">
+                        Document Type
                       </th>
                       <th rowspan="1" colspan="1" style="width: 348px" aria-label="Participant">
                         Record
@@ -98,9 +101,7 @@
                         aria-label="Created Date: activate to sort column ascending">
                         Last updated
                       </th>
-                      <th rowspan="1" colspan="1" aria-label="Actions">
-                        Actions
-                      </th>
+                      <th rowspan="1" colspan="1" aria-label="Actions">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -133,6 +134,7 @@
                             </a>
                           </template>
                         </td>
+                        <td>{{ doc.entry_point }}</td>
                         <td>
                           <span class="badge rounded-pill badge-light-primary">
                             {{ doc.participants_count }} Participant(s)
@@ -171,7 +173,10 @@
                                   <span>View</span>
                                 </a>
 
-                                <template v-if="doc.entry_point == 'Docs' && doc.allowed_seal_per_unit == null">
+                                <template v-if="
+                                  doc.entry_point == 'Docs' &&
+                                  doc.allowed_seal_per_unit == null
+                                ">
                                   <a class="dropdown-item" role="button" @click="
                                     getDocument({
                                       id: doc.id,
@@ -235,11 +240,14 @@
             <div class="row my-2">
               <div class="col-12">
                 <div class="d-flex justify-content-between px-2">
-                  <button class="btn btn-sm btn-secondary me-1 mb-1" @click="isHidden = !isHidden">
+                  <button class="btn btn-sm btn-secondary me-1" @click="isHidden = !isHidden">
                     &larr; Back
                   </button>
 
-                  <template v-if="userDocument.entry_point == 'Docs' && userDocument.allowed_seal_per_unit == null">
+                  <template v-if="
+                    userDocument.entry_point == 'Docs' &&
+                    userDocument.allowed_seal_per_unit == null
+                  ">
                     <router-link :to="{ name: 'document.edit', params: { document_id: editId } }"
                       class="btn btn-sm btn-primary">Edit
                     </router-link>

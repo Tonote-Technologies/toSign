@@ -28,9 +28,9 @@ const toTop = function () {
 </script>
 
 <style scoped>
-.custom-w {
+/* .custom-w {
   min-width: 860px;
-}
+} */
 
 .scroll-top {
   bottom: 20%;

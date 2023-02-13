@@ -236,7 +236,7 @@ const remainingEnvelops = (str, arr) => {
 };
 
 onMounted(() => {
-  redirectToSignLink.value = process.env.VUE_APP_URL_SIGN_LINK;
+  redirectToSignLink.value = process.env.VUE_APP_URL_SIGN_LINK_LIVE;
   redirectToUserDashboard.value = process.env.VUE_APP_URL_AUTH_LIVE;
   uri.value = capitalizeFirstLetter(route.currentRoute.value.query.status);
   page(uri.value);
