@@ -20,7 +20,9 @@
             :disabled="isDownload">
             <template v-if="isDownload">
               <span class="spinner-border spinner-border-sm"></span>
-              Downloading
+              <span class="d-none d-md-block">
+                Downloading
+              </span>
             </template>
             <template v-else>
               <span class="d-md-none d-xs-block">
