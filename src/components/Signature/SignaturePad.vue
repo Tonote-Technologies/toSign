@@ -4,7 +4,7 @@
       <div class="my-1 text-center">
         Draw your signature in the tool box
       </div>
-      <div :style="{ width: w, height: h }" @touchmove.prevent>
+      <div @touchmove.prevent>
         <canvas :id="state.uid" class="canvas shadow" :data-uid="state.uid" :disabled="state?.disabled"></canvas>
       </div>
     </div>
@@ -44,7 +44,7 @@ import {
 } from "vue";
 
 import { createNamespacedHelpers } from "vuex-composition-helpers/dist";
-const {  useActions } = createNamespacedHelpers(["print"]);
+const { useActions } = createNamespacedHelpers(["print"]);
 const { savePrint } = useActions(["savePrint"]);
 
 const emit = defineEmits(["close"]);
@@ -207,8 +207,13 @@ const draw = () => {
     let url;
     if (!isEmpty()) url = save();
 
-    c.width = type.value != 'xs' ? 400 : 290;
-    c.height = type.value != 'xs' ? 300 : 190;
+    c.width = 400;
+    c.height = 300;
+    if (type.value == 'xs') {
+      c.width = 290;
+      c.height = 190;
+    }
+
 
     c.getContext("2d").scale(1, 1);
     clear();
@@ -284,12 +289,22 @@ const createDrawSignature = () => {
 </script>
 
 <style scoped>
+canvas {
+  width: 400px;
+  height: 300px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
 }
 
 @media screen and (max-width: 991.5px) {
+  canvas {
+    width: 290px;
+    height: 190px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }

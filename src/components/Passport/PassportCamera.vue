@@ -12,11 +12,13 @@
         </p>
       </div>
 
-      <p v-if="isSelected == ''" class="text-center my-4"><i>Kindly select camera type to proceed</i></p>
+      <p v-if="isSelected == ''" class="text-center my-4">
+        <i>Kindly select camera type to proceed</i>
+      </p>
       <template v-else>
         <template v-if="isLoading">
           <div class="text-center">
-            <PreLoader class="my-4" />
+            <PuSkeleton width="160px" height="200px" />
           </div>
         </template>
       </template>
@@ -48,15 +50,16 @@
 
     <template v-if="prints.Photograph">
       <div class="grid grid__3 mt-2">
-        <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border custom-width"
+        <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border"
           :for="photo.created_at">
-          <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
+          <PuSkeleton width="120px" height="120px" v-show="loader" />
+          <div v-show="!loader" @click="getPrintId({ category: 'Upload', print_id: photo.id })">
             <template v-if="photo.user_id">
-              <div class="position-relative">
+              <div class="position-relative" style="width: 120px; height: 120px">
                 <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name pass"
                   :id="photo.created_at" :value="photo.id" />
 
-                <img :src="photo.file" class="img-fluid" :alt="photo.id" />
+                <img :src="photo.file" class="w-100 h-100" style="object-fit: scale-down" :alt="photo.id" />
                 <a role="button" @click="deletePassport(photo.id)"
                   class="text-danger btn-close d-block text-end delete"></a>
               </div>
@@ -98,7 +101,6 @@
 
 <script setup>
 import Camera from "simple-vue-camera";
-import PreLoader from "@/components/PreLoader.vue";
 import ModalComp from "@/components/ModalComp.vue";
 import { Icon } from "@iconify/vue";
 import AOS from "aos";
@@ -124,9 +126,12 @@ const isTimer = ref(false);
 const isDisabled = ref(false);
 const isDelete = ref(false);
 const printId = ref("");
-const isSelected = ref('')
-const videoDevices = ref([])
+const isSelected = ref("");
+const videoDevices = ref([]);
 const emit = defineEmits(["close"]);
+
+const loader = ref(true);
+setTimeout(() => (loader.value = false), 1000);
 
 watch(
   () => isSaved.value,
@@ -137,11 +142,16 @@ watch(
   }
 );
 
-const loading = () => (spinner.value = isLoading.value = true);
+const loading = () => {
+  spinner.value = isLoading.value = true
+  setTimeout(() => {
+    spinner.value = isLoading.value = false
+  }, 1000);
+};
 
 const started = () => {
-  spinner.value = isLoading.value = false
-  AOS.init({ duration: 500 })
+  spinner.value = isLoading.value = false;
+  AOS.init({ duration: 500 });
 };
 
 const getPrintId = (params) => {
@@ -156,7 +166,9 @@ const affixSnap = () => {
 
   isLoading.value = true;
   isDisabled.value = false;
-  setTimeout(() => { isLoading.value = false }, 1000);
+  setTimeout(() => {
+    isLoading.value = false;
+  }, 1000);
 };
 
 const deletePassport = (params) => {
@@ -175,7 +187,7 @@ const proceedToDelete = () => {
 
 setTimeout(async () => {
   const devices = await camera.value?.devices();
-  videoDevices.value = devices.filter(device => device.kind === 'videoinput');
+  videoDevices.value = devices?.filter((device) => device.kind === "videoinput");
 }, 3000);
 
 const changeCameraFace = () => camera.value?.changeCamera(isSelected.value);
@@ -183,14 +195,14 @@ const changeCameraFace = () => camera.value?.changeCamera(isSelected.value);
 const takeSnapshot = () => {
   spinner.value = isTimer.value = true;
   let counter = 3;
-  timer.value = 3
-  
+  timer.value = 3;
+
   const interval = setInterval(function () {
     counter--;
-    timer.value = counter
+    timer.value = counter;
     if (counter < 0) {
       clearInterval(interval);
-      spinner.value = isTimer.value = false
+      spinner.value = isTimer.value = false;
 
       camera.value?.snapshot({ width: 160, height: 200 }, "image/png", 0.5);
       const dataUrl = camera.value?.canvas.toDataURL("image/png");
@@ -210,9 +222,7 @@ const takeSnapshot = () => {
 .grid {
   display: grid;
   place-items: center;
-  gap: 15px;
-  width: 50%;
-  margin: 0 auto;
+  gap: 20px;
 }
 
 .grid__3 {
@@ -222,10 +232,6 @@ const takeSnapshot = () => {
 .video-options {
   width: 160px;
   margin: 0 auto;
-}
-
-.custom-width {
-  width: 100px
 }
 
 .icon {
@@ -302,10 +308,6 @@ const takeSnapshot = () => {
 
   .grid__3 {
     grid-template-columns: repeat(3, 1fr);
-  }
-
-  .custom-width {
-    width: 80px
   }
 }
 </style>

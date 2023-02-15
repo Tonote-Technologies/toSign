@@ -7,12 +7,12 @@
   <div v-else id="pdfvuer">
     <div class="downloader">
       <slot name="document-tools"></slot>
-      <!-- <template v-if="comp != 'audit'"> -->
-      <pdf :src="file" :text="false" :resize="true" class="mb-1" style="padding: 0 1px 1px 0" />
-      <!-- </template> -->
+      <template v-if="comp != 'audit'">
+        <pdf :src="file" :text="false" :resize="true" class="mb-1" style="padding: 0 1px 1px 0" />
+      </template>
 
-      <!-- <pdf v-else :src="file" v-for="i in numPages" :key="i" :id="i" :page="i" :text="false" :resize="true"
-        class="mb-1" /> -->
+      <pdf v-else :src="file" v-for="i in numPages" :key="i" :id="i" :page="i" :text="false" :resize="true"
+        class="mb-1" />
 
     </div>
   </div>

@@ -9,7 +9,10 @@
           <router-link :to="{ name: 'Dashboard' }" class="btn btn-sm btn-secondary me-1">
             &larr; Go back <span class="d-none d-lg-inline-block">to documents</span>
           </router-link>
-          <router-link :to="{ name: 'document.edit', params: { document_id: uri } }" class="btn btn-sm btn-primary">
+          <router-link v-if="
+            userDocument.entry_point == 'Docs' &&
+            userDocument.allowed_seal_per_unit == null
+          " :to="{ name: 'document.edit', params: { document_id: uri } }" class="btn btn-sm btn-primary">
             Edit</router-link>
         </div>
         <div class="d-action">
@@ -21,12 +24,14 @@
             </template>
             <template v-else>
               <span class="d-md-none d-xs-block">
-                <Icon icon="bx:download" style="font-size:1rem" />
+                <Icon icon="bx:download" style="font-size: 1rem" />
               </span>
               <span class="d-none d-md-block">Download</span>
             </template>
           </button>
-          <button class="btn btn-sm btn-primary ms-auto" @click="finishModal = true">Finish</button>
+          <button class="btn btn-sm btn-primary ms-auto" @click="finishModal = true">
+            Finish
+          </button>
         </div>
       </div>
     </div>
@@ -60,7 +65,7 @@
                     </template>
                     <template v-else>
                       <span v-for="(participant, index) in theDoc.participants" :key="index" style="color: #003bb3">
-                        {{ participant.user.first_name + ', ' }}
+                        {{ participant.user.first_name + ", " }}
                       </span>
                     </template>
                   </span>
@@ -75,7 +80,8 @@
                 </span>
               </template>
               <template v-else>
-                <small class="mail-date-time text-dark fw-normal"> {{ createdAt(theDoc.created_at) }}</small>
+                <small class="mail-date-time text-dark fw-normal">
+                  {{ createdAt(theDoc.created_at) }}</small>
               </template>
             </div>
           </div>
@@ -90,8 +96,10 @@
                   <template v-if="computedTools?.length != 0 && documentHeight">
                     <div v-for="tool in activeTaskFilter(computedTools, doc.id)" :key="tool.id" class="parent"
                       :style="{ height: documentHeight + 'px' }">
-                      <ToolAnnotation @remove="remove" :tool="tool" comp="audit"
-                        :owner="{ isOwner: theDoc.is_the_owner_of_document, name: theDoc.document_owner }" />
+                      <ToolAnnotation @remove="remove" :tool="tool" comp="audit" :owner="{
+                        isOwner: theDoc.is_the_owner_of_document,
+                        name: theDoc.document_owner,
+                      }" />
                     </div>
                   </template>
                 </template>
@@ -130,7 +138,8 @@
                       <h6 class="text-dark text-capitalize">
                         {{ item.full_name }}
                       </h6>
-                      <small class="timeline-event-time text-dark"> {{ item.signed_date }}</small>
+                      <small class="timeline-event-time text-dark">
+                        {{ item.signed_date }}</small>
                     </div>
                     <p>{{ item.added_text }}t</p>
                   </div>
@@ -172,37 +181,43 @@
 </template>
 
 <script setup>
-import { Icon } from '@iconify/vue';
-import PreLoader from '@/components/PreLoader.vue';
-import ModalComp from '@/components/ModalComp.vue';
-import ToolAnnotation from '@/components/Document/Edit/Tools/ToolAnnotation.vue';
+import { Icon } from "@iconify/vue";
+import PreLoader from "@/components/PreLoader.vue";
+import ModalComp from "@/components/ModalComp.vue";
+import ToolAnnotation from "@/components/Document/Edit/Tools/ToolAnnotation.vue";
 
-import { ref, onMounted, watch, computed } from 'vue';
-import moment from 'moment';
+import { ref, onMounted, watch, computed } from "vue";
+import moment from "moment";
 import jsPDF from "jspdf";
 import html2pdf from "html2pdf.js";
 
-import { useActions, useGetters } from 'vuex-composition-helpers/dist';
-import { useRouter } from 'vue-router';
-import RenderPage from '@/components/Document/Edit/Main/RenderPage.vue';
-import { useToast } from 'vue-toast-notification';
+import { useActions, useGetters } from "vuex-composition-helpers/dist";
+import { useRouter } from "vue-router";
+import RenderPage from "@/components/Document/Edit/Main/RenderPage.vue";
+import { useToast } from "vue-toast-notification";
 
 const toast = useToast();
 const route = useRouter();
 
 const { userDocument, workingTools, documentAuditTrail } = useGetters({
-  profile: 'auth/profile',
-  userDocument: 'document/userDocument',
-  workingTools: 'document/workingTools',
-  documentAuditTrail: 'document/documentAuditTrail',
+  profile: "auth/profile",
+  userDocument: "document/userDocument",
+  workingTools: "document/workingTools",
+  documentAuditTrail: "document/documentAuditTrail",
 });
 
-const { getUserDocument, getTools, getAuditTrail, finishAnnotation, doneEditing } = useActions({
-  getUserDocument: 'document/getUserDocument',
-  getAuditTrail: 'document/getAuditTrail',
-  getTools: 'document/getTools',
-  finishAnnotation: 'document/finishAnnotation',
-  doneEditing: 'document/doneEditing',
+const {
+  getUserDocument,
+  getTools,
+  getAuditTrail,
+  finishAnnotation,
+  doneEditing,
+} = useActions({
+  getUserDocument: "document/getUserDocument",
+  getAuditTrail: "document/getAuditTrail",
+  getTools: "document/getTools",
+  finishAnnotation: "document/finishAnnotation",
+  doneEditing: "document/doneEditing",
 });
 
 const theTools = ref([]);
@@ -224,16 +239,16 @@ const getHeight = (event) => (documentHeight.value = event);
 const finishModal = ref(false);
 const loading = ref(false);
 const isLoading = ref(true);
-const uri = ref('');
-const theDoc = ref('');
+const uri = ref("");
+const theDoc = ref("");
 
 const audited = ref([]);
 const audit = computed(() => {
   let audit = documentAuditTrail.value.filter((str) => {
-    const longName = str.log_name.split(' ', 2);
+    const longName = str.log_name.split(" ", 2);
     for (let i = 0; i < longName.length; i++) {
       longName[i] = longName[i].charAt(0).toUpperCase() + longName[i].slice(1);
-      const participantName = longName.join(' ');
+      const participantName = longName.join(" ");
 
       const auditObj = {
         full_name: participantName,
@@ -246,27 +261,14 @@ const audit = computed(() => {
   return audit;
 });
 
-const files = ref([]);
-const sortedFile = ref('');
 watch(
   () => [userDocument.value, isLoading.value],
   ([newUserDoc, newTool], [oldUserDoc, oldTool]) => {
     if (newUserDoc != oldUserDoc) {
       theDoc.value = newUserDoc;
-      theDoc.value.documentUploads.filter((item) => {
-        if (item.number_ordering != null)
-        // if (item.status == 'Processing')
-          files.value.push({
-            id: item.id,
-            file_url: item.file_url,
-            number: item.number_ordering,
-          });
-      });
-      sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
     }
 
     if (oldTool != newTool) theTools.value = workingTools.value;
-
   }
 );
 
@@ -275,33 +277,33 @@ const confirmEdit = () => {
   finishModal.value = false;
 
   finishAnnotation(uri.value);
-  toast.success('Document annotation completed', {
+  toast.success("Document annotation completed", {
     timeout: 5000,
-    position: 'top-right',
+    position: "top-right",
   });
 
   setTimeout(() => {
     loading.value = false;
-    route.push({ name: 'Dashboard', query: { status: 'completed' } });
+    route.push({ name: "Dashboard", query: { status: "completed" } });
   }, 1000);
 };
 
 const createdAt = (dateParams) => {
-  return moment(dateParams).format('MMM. Do, YYYY [at] h:mm:ss a');
+  return moment(dateParams).format("MMM. Do, YYYY [at] h:mm:ss a");
 };
 
 const isDownload = ref(false);
 const doneDataUrl = ref([]);
 const exportHTMLToPDF = async (params) => {
-  isDownload.value = true
-  const pages = document.getElementsByClassName('downloader');
+  isDownload.value = true;
+  const pages = document.getElementsByClassName("downloader");
 
   const opt = {
     margin: [0, 0, -2, 0],
     filename: userDocument.value.title,
-    image: { type: 'jpeg', quality: 1 },
-    html2canvas: { scale: window.devicePixelRatio },
-    jsPDF: { orientation: 'p', unit: 'in', format: 'a4', putOnlyUsedFonts: true }
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { dpi: 192, letterRendering: true },
+    jsPDF: { unit: "in", format: "letter", orientation: "portrait", compressPDF: true },
   };
 
   const doc = new jsPDF(opt.jsPDF);
@@ -310,35 +312,43 @@ const exportHTMLToPDF = async (params) => {
   doc.setProperties({
     title: userDocument.value.title,
     // subject: 'This is the subject',
-    author: 'ToNote',
-    keywords: 'To-Sign, e-signing, web 1.0',
-    creator: 'ToNote Technologies'
+    author: "ToNote",
+    keywords: "To-Sign, e-signing, web 1.0",
+    creator: "ToNote Technologies",
   });
-
-
-  // console.log(doc, width, height, window.devicePixelRatio)
 
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
 
-    if (params != 'done') {
-      const pageImage = await html2pdf().set(opt).from(page).outputImg()
+    if (params != "done") {
+      const pageImage = await html2pdf().set(opt).from(page).outputImg();
       if (i != 0) doc.addPage();
-      doc.addImage(pageImage.src, 'jpeg', opt.margin[0], opt.margin[0], pageSize.width, pageSize.height);
+      doc.addImage(
+        pageImage.src,
+        "jpeg",
+        opt.margin[0],
+        opt.margin[0],
+        pageSize.width,
+        pageSize.height
+      );
     } else {
-      await html2pdf().set(opt).from(page).outputPdf().then(function (pdf) {
-        doneDataUrl.value.push('data:application/pdf;base64,' + btoa(pdf));
-      })
+      await html2pdf()
+        .set(opt)
+        .from(page)
+        .outputPdf()
+        .then(function (pdf) {
+          doneDataUrl.value.push("data:application/pdf;base64," + btoa(pdf));
+        });
     }
   }
 
-  if (params == 'done') {
+  if (params == "done") {
     if (pages.length === doneDataUrl.value.length) isDoneEdit();
     return;
   }
 
   const pdf = doc.save(opt.filename);
-  if (pdf) isDownload.value = false
+  if (pdf) isDownload.value = false;
   return pdf;
 };
 
@@ -358,6 +368,24 @@ const isDoneEdit = () => {
 //   }
 // };
 
+const files = ref([]);
+const sortedFile = ref("");
+
+function sortedDocumentUploads(params) {
+  params.documentUploads?.filter((item) => {
+    files.value.push({
+      id: item.id,
+      file_url: item.file_url,
+      number: item.number_ordering,
+      entry_point: params.entry_point,
+    });
+    // if (item.number_ordering != null)
+    // if (item.status == 'Processing')
+  });
+  sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
+  console.log(sortedFile.value);
+}
+
 onMounted(() => {
   uri.value = route.currentRoute.value.params.document_id;
   getUserDocument(uri.value);
@@ -373,6 +401,15 @@ onMounted(() => {
       window.Tawk_API.hideWidget();
     }
   }, 2000);
+
+  if (
+    userDocument.value.documentUploads.length > 0 &&
+    userDocument.value.entry_point != "Docs" &&
+    userDocument.value.status == "Completed"
+  ) {
+    return sortedDocumentUploads(userDocument.value);
+  }
+  sortedDocumentUploads(theDoc.value);
 });
 </script>
 

@@ -222,7 +222,7 @@
                     </template>
                     <template v-else>
                       <tr class="even text-center">
-                        <td colspan="5" class="pt-3">
+                        <td colspan="6" class="pt-3">
                           <i>No Items Found in
                             {{
                               dashboard.status == "Deleted" ? "Trash" : dashboard.status
