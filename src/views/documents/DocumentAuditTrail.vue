@@ -383,14 +383,12 @@ const sortedFile = ref("");
 
 function sortedDocumentUploads(params) {
   params.documentUploads?.filter((item) => {
-    files.value.push({
-      id: item.id,
-      file_url: item.file_url,
-      number: item.number_ordering,
-      entry_point: params.entry_point,
-    });
-    // if (item.number_ordering != null)
-    // if (item.status == 'Processing')
+    if (item.status == "Processing" && item.number_ordering != null) {
+      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, });
+    }
+    if (params.entry_point != "Docs" && item.number_ordering == null) {
+      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, });
+    }
   });
   sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
 }

@@ -98,8 +98,6 @@ const sortedFile = computed(() => {
     // if (item.status == 'Processing') {
     if (item.status == "Processing" && item.number_ordering != null) {
       files.push({ id: item.id, file_url: item.file_url, number: item.number_ordering });
-    } else {
-      router.push({ name: "document.dashboard" });
     }
     files.sort((a, b) => (a.number > b.number ? 1 : -1));
   });
