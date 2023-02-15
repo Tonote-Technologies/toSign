@@ -266,6 +266,14 @@ watch(
   ([newUserDoc, newTool], [oldUserDoc, oldTool]) => {
     if (newUserDoc != oldUserDoc) {
       theDoc.value = newUserDoc;
+      if (
+        theDoc.value.documentUploads.length > 0 &&
+        theDoc.value.entry_point != "Docs" &&
+        theDoc.value.status == "Completed"
+      ) {
+        return sortedDocumentUploads(theDoc.value);
+      }
+      sortedDocumentUploads(theDoc.value);
     }
 
     if (oldTool != newTool) theTools.value = workingTools.value;
@@ -383,7 +391,6 @@ function sortedDocumentUploads(params) {
     // if (item.status == 'Processing')
   });
   sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
-  console.log(sortedFile.value);
 }
 
 onMounted(() => {
@@ -401,15 +408,6 @@ onMounted(() => {
       window.Tawk_API.hideWidget();
     }
   }, 2000);
-
-  if (
-    userDocument.value.documentUploads.length > 0 &&
-    userDocument.value.entry_point != "Docs" &&
-    userDocument.value.status == "Completed"
-  ) {
-    return sortedDocumentUploads(userDocument.value);
-  }
-  sortedDocumentUploads(theDoc.value);
 });
 </script>
 
