@@ -7,10 +7,20 @@
   </div>
 
   <div v-show="prints.Initial">
+    <div class="row">
+      <div class="col-md-4 ms-auto">
+        <button @click="createSignatureModal = true" class="float-end btn btn-outline-secondary btn-sm waves-effect">
+          <EditIcon />
+          Edit
+        </button>
+      </div>
+    </div>
+
     <p class="text-center fw-normal">Pick an initial signature to append</p>
     <div class="grid">
       <label v-for="(print, index) in prints.Initial" :key="index" class="form-check-label border" :for="print.id">
-        <div @click="
+        <PuSkeleton width="110px" height="60px" v-show="loader" />
+        <div v-show="!loader" @click="
           getImgUrl({ category: print.category, type: print.type, print_id: print.id })
         ">
           <template v-if="print.user_id">
@@ -51,6 +61,7 @@
 <script setup>
 import ModalComp from "@/components/ModalComp.vue";
 import SignatureSelectInitial from "@/components/Signature/SignatureSelectInitial.vue";
+import EditIcon from '@/icons/EditIcon.vue';
 
 import { ref, defineEmits, watch } from "vue";
 import { createNamespacedHelpers } from "vuex-composition-helpers/dist";
@@ -63,6 +74,9 @@ const loading = ref(false);
 const isDisabled = ref(false);
 const selected = ref("");
 const printId = ref("");
+
+const loader = ref(true);
+setTimeout(() => loader.value = false, 1000)
 
 watch(
   () => prints.value,

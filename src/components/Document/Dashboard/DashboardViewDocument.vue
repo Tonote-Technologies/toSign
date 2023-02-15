@@ -50,8 +50,12 @@
     <div class="divider bg-light pb-1 m-0"></div>
 
     <div class="card-body mail-message py-0">
-      <div v-for="(doc, index) in sortedFile" class="mb-1" :key="index">
-        <RenderPage :file="doc.file_url" :comp="sortedFile.length <= 1 ? 'audit' : ''" />
+      <div class="row">
+        <div class="col-md-10 mx-auto">
+          <div v-for="(doc, index) in sortedFile" class="mb-1" :key="index">
+            <RenderPage :file="doc.file_url" :comp="sortedFile.length <= 1 ? 'audit' : ''" />
+          </div>
+        </div>
       </div>
     </div>
   </div>

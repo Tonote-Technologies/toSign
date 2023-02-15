@@ -33,12 +33,13 @@
             <div class="grid grid__3">
               <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border"
                 :for="photo.id">
-                <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
+                <PuSkeleton width="120px" height="120px" v-show="loader" />
+                <div v-show="!loader" @click="getPrintId({ category: 'Upload', print_id: photo.id })">
                   <template v-if="photo.user_id">
-                    <div class="position-relative">
+                    <div class="position-relative" style="width:120px;height:120px">
                       <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name"
                         :id="photo.id" :value="photo.id" />
-                      <img :src="photo.file" class="img-fluid" :alt="photo.id" />
+                      <img :src="photo.file" class="w-100 h-100" style="object-fit:scale-down" :alt="photo.id" />
                       <a role="button" @click="deletePassport(photo.id)"
                         class="text-danger btn-close d-block text-end delete"></a>
                     </div>
@@ -174,6 +175,8 @@ const change = ({ canvas }) => {
   croppedData.value = canvas.toDataURL();
 }
 
+const loader = ref(true);
+setTimeout(() => loader.value = false, 1000)
 
 const preparedFile = (file) => {
   let reader = new FileReader();
@@ -297,11 +300,11 @@ const proceedToDelete = () => {
 .grid {
   display: grid;
   place-items: center;
-  gap: 10px;
+  gap: 20px;
 }
 
 .grid__3 {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .grid__1 {
@@ -341,7 +344,7 @@ const proceedToDelete = () => {
 
 @media screen and (max-width: 991.5px) {
   .grid__3 {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .grid__2 {

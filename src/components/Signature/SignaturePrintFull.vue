@@ -17,15 +17,16 @@
       </div>
     </div>
     <p class="text-center fw-normal">Pick a signature to append</p>
-    <div class="grid qwerty">
+    <div class="grid grid__2">
       <label v-for="(print, index) in prints.Signature" :key="index" class="form-check-label border" :for="print.id">
-        <div @click="
+        <PuSkeleton width="110px" height="60px" v-show="loader" />
+        <div v-show="!loader" @click="
           getImgUrl({ category: print.category, type: print.type, print_id: print.id })
-        ">
+        " style="width:110px; height:60px">
           <template v-if="print.user_id">
             <input type="radio" :name="print.id" v-model="selected" class="form-check-input tool_name" :id="print.id"
               :value="print.id" />
-            <img :src="print.file" class="img-fluid" width="200" :alt="print.id" height="30" />
+            <img :src="print.file" class="w-100 h-100" style="object-fit:scale-down" :alt="print.id" />
           </template>
         </div>
       </label>
@@ -117,6 +118,7 @@ import LeftTabWrapper from "@/components/Tab/TabLeftNav/LeftTabWrapper.vue";
 import LeftTabList from "@/components/Tab/TabLeftNav/LeftTabList.vue";
 import SignaturePad from "@/components/Signature/SignaturePad.vue";
 import SignatureSelectFull from "@/components/Signature/SignatureSelectFull.vue";
+import SignatureSelectInitial from "@/components/Signature/SignatureSelectInitial.vue";
 import SignatureUpload from "@/components/Signature/SignatureUpload.vue";
 import EditIcon from '@/icons/EditIcon.vue';
 
@@ -132,6 +134,9 @@ const loading = ref(false);
 const isDisabled = ref(false);
 const selected = ref("");
 const printId = ref("");
+
+const loader = ref(true);
+setTimeout(() => loader.value = false, 1500)
 
 watch(
   () => prints.value,
@@ -200,5 +205,11 @@ const updateModal = () => {
 
 [type="radio"]:checked+img {
   outline: 2px solid #003bb3;
+}
+
+@media screen and (max-width: 991.5px) {
+  .grid__2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

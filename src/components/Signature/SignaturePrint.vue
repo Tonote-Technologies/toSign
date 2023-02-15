@@ -8,12 +8,14 @@
 
   <div v-show="prints.Signature">
     <div class="grid">
-      <div v-for="(print, index) in prints.Signature" :key="index">
-        <img :src="print.file" class="img-fluid" width="200" :alt="print.id" height="30" />
+      <div v-for="(print, index) in prints.Signature" :key="index" style="width:110px; height:60px">
+        <PuSkeleton width="110px" height="60px" v-show="loader" />
+        <img v-show="!loader" :src="print.file" class="w-100 h-100" style="object-fit:scale-down" :alt="print.id" />
       </div>
 
-      <div v-for="(print, index) in prints.Initial" :key="index">
-        <img :src="print.file" class="img-fluid" width="200" :alt="print.id" height="30" />
+      <div v-for="(print, index) in prints.Initial" :key="index" style="width:110px; height:60px">
+        <PuSkeleton width="110px" height="60px" v-show="loader" />
+        <img v-show="!loader" :src="print.file" class="w-100 h-100" style="object-fit:scale-down" :alt="print.id" />
       </div>
     </div>
   </div>
@@ -68,6 +70,9 @@ const { useGetters } = createNamespacedHelpers("print");
 const { prints } = useGetters(["prints"]);
 
 const createSignatureModal = ref(false);
+const loader = ref(true);
+
+setTimeout(() => loader.value = false, 1000)
 
 watch(
   () => prints.value,

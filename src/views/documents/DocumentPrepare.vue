@@ -33,7 +33,7 @@ const isEncrypting = ref(true);
 setTimeout(() => {
   isEncrypting.value = false;
   route.push({ name: "document.edit", params: { document_id: userDocument.value.id } });
-}, 2000);
+}, 1000);
 </script>
 
 <style scoped>

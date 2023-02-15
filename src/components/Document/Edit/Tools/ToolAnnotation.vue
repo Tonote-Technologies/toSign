@@ -34,31 +34,23 @@
     </template>
     <ParticipantName :userId="tool.user_id" @code="code" />
   </Vue3DraggableResizable>
-  <Vue3DraggableResizable v-else :initW="Number(tool.tool_width)" :initH="Number(tool.tool_height)" :minW="95"
-    :minH="30" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y"
-    v-model:h="toolHeight" v-model:w="toolWidth" @drag-end="dragEnd($event, tool)"
-    @resize-end="resizeEnd(tool, toolWidth, toolHeight)"
+  <Vue3DraggableResizable v-else :initW="Number(tool.tool_width)" :initH="Number(tool.tool_height)"
+    :minW="tool.tool_name == 'Textarea' ? 62 : 95" :minH="30" :x="Number(tool.tool_pos_left)"
+    :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y" v-model:h="textHeight"
+    v-model:w="textWidth" @drag-end="dragEnd($event, tool)" @resize-end="resizeEnd(tool, toolWidth, toolHeight)"
     :draggable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
     :resizable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
     :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
     :lockAspectRatio="['Seal', 'Stamp'].includes(tool.tool_name) ? true : false" :handles="['tl', 'tr', 'bl', 'br']"
     class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
     class-name-resizing="resizing-class">
-    <textarea v-if="tool.tool_name == 'Textarea'" v-model="tool.append_print.value" class="textareaTool w-100 h-100"
+    <textarea v-if="tool.tool_name == 'Textarea'" v-model="textValue" class="textareaTool w-100 h-100"
       @blur="textInput($event.target, tool)" placeholder="Input text here" :style="{
         '--placeholder-color':
           (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
             ? '#28C76F'
             : hex.code,
       }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false"></textarea>
-    <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.append_print.value" class="textareaTool h-100"
-      @blur="textInput($event.target, tool)" placeholder="Input text here"
-      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" :style="{
-        '--placeholder-color':
-          (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
-            ? '#28C76F'
-            : hex.code,
-      }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false" /> -->
 
     <template v-else>
       <div class="grid" v-if="isToolLoading.id == tool.id && isToolLoading.active">
@@ -92,7 +84,7 @@
   </Vue3DraggableResizable>
 
   <Teleport to="body">
-    <ModalComp :show="affixModal" :footer="false" :size="'modal-lg'" @close="affixModal = false">
+    <ModalComp :show="affixModal" :footer="false" :size="'modal-md'" @close="affixModal = false">
       <template #header>
         <h4 class="modal-title">Signature box</h4>
       </template>
@@ -140,7 +132,7 @@
   </Teleport>
 
   <Teleport to="body">
-    <ModalComp :show="uploadImage" :footer="false" :size="'modal-lg'" @close="uploadImage = false">
+    <ModalComp :show="uploadImage" :footer="false" :size="'modal-md'" @close="uploadImage = false">
       <template #header>
         <h4 class="modal-title">Image management</h4>
       </template>
@@ -250,6 +242,7 @@ const getUserId = (params) => {
   toolId.value = params.id;
 };
 
+const textValue = (props.tool.append_print?.value != '' ? props.tool.append_print?.value : '')
 const textInput = (e, params) => {
   const data = {
     append_print_id: params.append_print.id,
@@ -258,6 +251,7 @@ const textInput = (e, params) => {
     type: "Text",
     category: "Type",
     tool_width: textWidth.value.toString(),
+    tool_height: textHeight.value.toString(),
   };
   editTools({ id: params.id, payload: data });
 };
@@ -272,11 +266,19 @@ const remove = (params) => {
   emit("remove", params);
 };
 
-const textWidth = ref(120)
+const textWidth = ref(62)
+const textHeight = ref(0)
 const autoResize = {
-  minWidth: 120,
+  minWidth: 62,
   maxWidth: 600,
   buffer: 0,
+
+  calcHeight: function (value) {
+    let numberOfLineBreaks = (value.match(/\n/g) || []).length;
+    // min-height + lines x line-height + padding + border
+    let newHeight = 20 + numberOfLineBreaks * 20 + 12 + 2;
+    return newHeight;
+  },
 
   resize: function (el) {
     const test = document.createElement('pre');
@@ -284,7 +286,7 @@ const autoResize = {
     test.innerHTML = el.value;
     el.parentNode.appendChild(test);
     const calculatedWidth = Math.min(Math.max(test.offsetWidth + this.buffer, this.minWidth), this.maxWidth)
-    el.parentElement.style.width = el.style.width = calculatedWidth + 'px';
+    el.parentElement.style.width = calculatedWidth + 'px';
     textWidth.value = calculatedWidth
     el.parentNode.removeChild(test);
   },
@@ -300,6 +302,9 @@ const autoResize = {
 
       els[i].addEventListener('keyup', function () {
         autoResize.resize(this);
+        const finalHeight = this.maxWidth < 600 ? autoResize.calcHeight(this.value) : this.scrollHeight
+        this.parentElement.style.height = finalHeight + "px";
+        textHeight.value = finalHeight
       }, false);
 
       this.resize(els[i]);
@@ -332,7 +337,7 @@ textarea::-webkit-input-placeholder {
   color: var(--placeholder-color);
 }
 
-input:-moz-placeholder {
+textarea:-moz-placeholder {
   color: var(--placeholder-color);
 }
 
