@@ -5,8 +5,7 @@
     </div>
 
     <div class="content-body">
-      <div class="body-content-overlay" :class="{ show: dashboard.isOpened }" @click="dashboard.setIsOpened(false)">
-      </div>
+      <div class="body-content-overlay" :class="{ show: dashboard.isOpened }" @click="dashboard.setIsOpened(false)"></div>
       <div class="email-app-list">
         <div class="email-user-list">
           <div class="card shadow-none bg-light">
@@ -14,11 +13,11 @@
               <p>Title: {{ theDoc.title }}</p>
               <div id="mainWrapper" class="mx-auto" :style="{ width: '815px' }">
                 <RenderPage v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url" @click="$emit('docId', doc.id)"
-                  @pageId="getPageId" @documentHeight="getHeight">
+                  @documentHeight="getHeight" :oldDoc="{ isOld: doc.isOldDoc }">
                   <template #document-tools>
-                    <template v-if="theTools?.length != 0 && documentHeight">
+                    <template v-if="theTools?.length != 0 && height">
                       <div v-for="tool in activeTaskFilter(theTools, doc.id)" :key="tool.id" class="parent"
-                        :style="{ height: documentHeight + 'px' }">
+                        :style="{ height: height + 'px' }">
                         <ToolAnnotation @remove="remove" :tool="tool" :owner="{
                           isOwner: theDoc.is_the_owner_of_document,
                           name: theDoc.document_owner,
@@ -37,35 +36,35 @@
         </div>
       </div>
     </div>
-  </div>
+</div>
 </template>
 
 <script setup>
-import { dashboard } from "@/store/dashboard";
-import ToolAnnotation from "@/components/Document/Edit/Tools/ToolAnnotation.vue";
-import RenderPage from "./RenderPage.vue";
-import MenuIcon from "@/icons/MenuIcon.vue";
+import { dashboard } from '@/store/dashboard';
+import ToolAnnotation from '@/components/Document/Edit/Tools/ToolAnnotation.vue';
+import RenderPage from './RenderPage.vue';
+import MenuIcon from '@/icons/MenuIcon.vue';
 
-import { ref, onMounted, computed, watch } from "vue";
-import { useRouter } from "vue-router";
-import { useGetters, useActions } from "vuex-composition-helpers/dist";
+import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useGetters, useActions } from 'vuex-composition-helpers/dist';
 
 const router = useRouter();
 
 const { userDocument, workingTools, isLoading } = useGetters({
-  workingTools: "document/workingTools",
-  userDocument: "document/userDocument",
-  isLoading: "document/isLoading",
+  workingTools: 'document/workingTools',
+  userDocument: 'document/userDocument',
+  isLoading: 'document/isLoading',
 });
 
 const { getUserDocument, getTools, removeTool } = useActions({
-  getUserDocument: "document/getUserDocument",
-  getTools: "document/getTools",
-  removeTool: "document/removeTool",
+  getUserDocument: 'document/getUserDocument',
+  getTools: 'document/getTools',
+  removeTool: 'document/removeTool',
 });
 
 const openSide = ref(false);
-const theDoc = ref("");
+const theDoc = ref('');
 const theTools = ref([]);
 const documentHeight = ref(0);
 
@@ -76,11 +75,18 @@ const activeTaskFilter = (tools, docUpId) => {
   return activeTasks;
 };
 
+const height = ref(0)
 watch(
-  () => [userDocument.value, isLoading.value],
-  ([newDoc, newTool], [oldDoc, oldTool]) => {
+  () => [userDocument.value, isLoading.value, documentHeight.value],
+  ([newDoc, newTool, newH], [oldDoc, oldTool,]) => {
     if (oldDoc != newDoc) {
       theDoc.value = newDoc;
+    }
+
+    if (newH) {
+      setTimeout(() => {
+        height.value = newH;
+      }, 2000);
     }
 
     if (oldTool != newTool) theTools.value = workingTools.value;
@@ -95,16 +101,18 @@ const remove = (params) => removeTool(params);
 const sortedFile = computed(() => {
   const files = [];
   userDocument.value?.documentUploads?.filter((item) => {
-    // if (item.status == 'Processing') {
-    if (item.status == "Processing" && item.number_ordering != null) {
-      files.push({ id: item.id, file_url: item.file_url, number: item.number_ordering });
+    if (item.status == 'Processing' && item.number_ordering != null) {
+      files.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
+    }
+    if (item.status == 'Processing' && item.created_at.includes('2022')) {
+      files.push({ id: item.id, file_url: item.file_url, isOldDoc: true });
     }
     files.sort((a, b) => (a.number > b.number ? 1 : -1));
   });
   return files;
 });
 
-const uri = ref("");
+const uri = ref('');
 onMounted(() => {
   uri.value = router.currentRoute.value.params.document_id;
   getUserDocument(uri.value);

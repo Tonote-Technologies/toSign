@@ -93,7 +93,7 @@
           <div class="card-body bg-light mail-message-wrapper py-0">
             <div id="mainWrapper" class="mx-auto mb-2" :style="{ width: '815px' }">
               <RenderPage v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url" @click="$emit('docId', doc.id)"
-                @documentHeight="getHeight">
+                @documentHeight="getHeight" :oldDoc="{ isOld: doc.isOldDoc }">
                 <template #document-tools>
                   <template v-if="computedTools?.length != 0 && documentHeight">
                     <div v-for="tool in activeTaskFilter(computedTools, doc.id)" :key="tool.id" class="parent"
@@ -179,7 +179,7 @@
         Confirm
       </button>
     </template>
-  </ModalComp>
+</ModalComp>
 </template>
 
 <script setup>
@@ -383,12 +383,13 @@ const sortedFile = ref("");
 
 function sortedDocumentUploads(params) {
   params.documentUploads?.filter((item) => {
-    if (item.status == "Processing" && item.number_ordering != null) {
-      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, });
+    if (item.status == 'Processing' && item.number_ordering != null) {
+      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
     }
-    if (params.entry_point != "Docs" && item.number_ordering == null) {
-      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, });
+    if (item.status == 'Processing' && item.created_at.includes('2022')) {
+      files.value.push({ id: item.id, file_url: item.file_url, isOldDoc: true });
     }
+    files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
   });
   sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
 }

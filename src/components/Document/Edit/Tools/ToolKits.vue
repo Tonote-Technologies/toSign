@@ -5,6 +5,7 @@
         active: tool.active,
         userEmail: tool.userEmail,
         color: tool.color,
+        isOld: tool.isOld,
         toolId: 'textTool',
         tool_name: 'Textarea',
       })
@@ -26,6 +27,7 @@
         active: tool.active,
         userEmail: tool.userEmail,
         color: tool.color,
+        isOld: tool.isOld,
         toolId: 'signTool',
         tool_name: 'Signature',
       })
@@ -47,6 +49,7 @@
         active: tool.active,
         userEmail: tool.userEmail,
         color: tool.color,
+        isOld: tool.isOld,
         toolId: 'initialTool',
         tool_name: 'Initial',
       })
@@ -68,6 +71,7 @@
         active: tool.active,
         userEmail: tool.userEmail,
         color: tool.color,
+        isOld: tool.isOld,
         toolId: 'dateTool',
         tool_name: 'Date',
       })
@@ -90,6 +94,7 @@
           active: tool.active,
           userEmail: tool.userEmail,
           color: tool.color,
+          isOld: tool.isOld,
           toolId: 'sealTool',
           tool_name: 'Seal',
         })
@@ -111,6 +116,7 @@
           active: tool.active,
           userEmail: tool.userEmail,
           color: tool.color,
+          isOld: tool.isOld,
           toolId: 'stampTool',
           tool_name: 'Stamp',
         })
@@ -133,22 +139,23 @@
         active: tool.active,
         userEmail: tool.userEmail,
         color: tool.color,
+        isOld: tool.isOld,
         toolId: 'photoTool',
         tool_name: 'Photo',
       })
     " :style="{
-      border:
-        '2px solid ' +
-        (tool.color?.owner && tool.userEmail != ''
-          ? '#28C76F !important'
-          : !tool.active
-            ? '#333'
-            : tool.color?.code + '!important'),
-    }">
+  border:
+    '2px solid ' +
+    (tool.color?.owner && tool.userEmail != ''
+      ? '#28C76F !important'
+      : !tool.active
+        ? '#333'
+        : tool.color?.code + '!important'),
+}">
       Image
       <ImageIcon />
     </li>
-  </div>
+</div>
 </template>
 
 <script setup>

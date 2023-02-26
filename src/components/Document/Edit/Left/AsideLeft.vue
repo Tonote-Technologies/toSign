@@ -34,8 +34,8 @@
                   }" :class="{ 'custom-select-active': signerEmail != '' }" @change="selectSigner"
                     v-model="signerEmail">
                     <option value="">Select Signer</option>
-                    <option v-for="(signer, index) in filteredParticipant" :key="index"
-                      :data-email="signer?.user?.email" :value="signer?.user?.email">
+                    <option v-for="(signer, index) in filteredParticipant" :key="index" :data-email="signer?.user?.email"
+                      :value="signer?.user?.email">
                       {{ signer?.user?.first_name }} {{ signer?.user?.last_name }}
                     </option>
                   </select>
@@ -157,6 +157,7 @@ watch(
         color: userDocument.value.is_the_owner_of_document
           ? code.value
           : { code: initCode.value },
+        isOld: userDocument.value.created_at.includes('2022'),
         // color: userDocument.value.is_the_owner_of_document ? '#28C76F' : init,
       };
     }
@@ -215,6 +216,7 @@ const selectSigner = (e) => {
     userEmail: signerEmail.value,
     userId: participantId.value,
     color: code.value ?? { code: "#003BB3" },
+    isOld: userDocument.value.created_at.includes('2022'),
   };
 };
 
@@ -240,8 +242,13 @@ $(document).on("click", "#mainWrapper", function (e) {
   removeMouseMoveListener();
 
   let posX = $(this).offset().left;
+  let posY = $(this).offset().top;
+
   let x = e.pageX - posX + 2;
-  let y = e.offsetY - 5;
+  let y = !tempStorage.value.isOld ? e.offsetY - 5 : e.pageY - posY - 2;
+
+  // let y = e.pageY - posY - 2; //! old-docs
+  // let y = e.offsetY - 5; //*** new-docs
 
   const toolName = tempStorage.value.tool_name;
   if (toolName == "Signature" || toolName == "Initial") {
@@ -259,7 +266,7 @@ $(document).on("click", "#mainWrapper", function (e) {
     user_id: participantId.value == "" ? profile.value.id : participantId.value,
     tool_name: toolName,
     tool_class: tool_class.value,
-    tool_width: toolName == "Textarea" ? "120" : "100",
+    tool_width: toolName == "Textarea" ? "63" : "100",
     tool_height: toolName == "Textarea" ? "25" : "40",
     tool_pos_top: y.toString(),
     tool_pos_left: x.toString(),
@@ -307,6 +314,7 @@ onMounted(() => {
       color: code.value ?? {
         code: userDocument.value.is_the_owner_of_document ? "#28C76F" : initCode.value,
       },
+      isOld: userDocument.value.created_at.includes('2022'),
     };
   }, 2000);
 });

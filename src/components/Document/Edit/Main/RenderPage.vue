@@ -7,15 +7,14 @@
   <div v-else id="pdfvuer">
     <div class="downloader">
       <slot name="document-tools"></slot>
-      <template v-if="comp != 'audit'">
+      <template v-if="comp != 'audit' && !oldDoc.isOld">
         <pdf :src="file" :text="false" :resize="true" class="mb-1" style="padding: 0 1px 1px 0" />
       </template>
 
       <pdf v-else :src="file" v-for="i in numPages" :key="i" :id="i" :page="i" :text="false" :resize="true"
         class="mb-1" />
-
     </div>
-  </div>
+</div>
 </template>
 
 <script setup>
@@ -34,9 +33,11 @@ import PreLoader from "@/components/PreLoader.vue";
 export default {
   components: {
     pdf: pdfvuer,
-    PreLoader
+    PreLoader,
   },
-  props: ["file", 'comp'],
+
+  props: ["file", "comp", "oldDoc"],
+
   data() {
     return {
       page: 1,
@@ -131,7 +132,7 @@ export default {
 </script>
 
 <style lang="css" scoped>
-@import '@/assets/css/pdfvuer.css';
+@import "@/assets/css/pdfvuer.css";
 
 #buttons {
   margin-left: 0 !important;

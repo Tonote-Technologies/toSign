@@ -40,8 +40,7 @@
                           @click="deleteDocument('restore', '')">
                           Restore
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger"
-                          @click="deleteDocument('delete', '')">
+                        <button type="button" class="btn btn-sm btn-outline-danger" @click="deleteDocument('delete', '')">
                           Permanently Delete
                         </button>
                       </template>
@@ -173,25 +172,26 @@
                                   <span>View</span>
                                 </a>
 
-                                <template v-if="
-                                  doc.entry_point == 'Docs' &&
-                                  doc.allowed_seal_per_unit == null
+                                <!-- <template v-if="
+                                    doc.entry_point == 'Docs' &&
+                                    doc.allowed_seal_per_unit == null
+                                  "> -->
+                                <!-- <template> -->
+                                <a class="dropdown-item" role="button" @click="
+                                  getDocument({
+                                    id: doc.id,
+                                    status: dashboard.status,
+                                    isEdit: true,
+                                  })
                                 ">
-                                  <a class="dropdown-item" role="button" @click="
-                                    getDocument({
-                                      id: doc.id,
-                                      status: dashboard.status,
-                                      isEdit: true,
-                                    })
-                                  ">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                      stroke-linejoin="round" class="feather feather-edit-2 me-50">
-                                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                                    </svg>
-                                    <span>Edit</span>
-                                  </a>
-                                </template>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="feather feather-edit-2 me-50">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                                  </svg>
+                                  <span>Edit</span>
+                                </a>
+                                <!-- </template> -->
                               </template>
                               <template v-else>
                                 <a class="dropdown-item" href="#" @click="deleteDocument('restore', doc.id)">
@@ -299,10 +299,11 @@
         Create
       </button>
     </template>
-  </ModalComp>
+</ModalComp>
 </template>
 
 <script setup>
+
 import ModalComp from "@/components/ModalComp.vue";
 import moment from "moment";
 
