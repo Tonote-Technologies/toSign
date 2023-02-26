@@ -55,14 +55,6 @@
               : hex.code,
         }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false"></textarea>
 
-    <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="textValue" class="textareaTool w-100 h-100"
-        @blur="textInput($event.target, tool)" placeholder="Input text here" :style="{
-          '--placeholder-color':
-            (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
-              ? '#28C76F'
-                          : hex.code,
-                    }" :disabled="tool.user_id != profile.id ? true : false" /> -->
-
       <template v-if="
         comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
       ">
