@@ -60,9 +60,9 @@
 
 .textarea2,
 .textareaTool {
-  border: none;
-  outline: none;
-  font-weight: 500;
+  border: none !important;
+  outline: none !important;
+  font-weight: 500 !important;
   color: #000 !important;
   overflow: hidden;
   resize: none;
@@ -181,7 +181,7 @@
 }
 
 .textareaTool:focus {
-  border: 1px solid #CCC;
+  outline: 1px solid #CCC;
 }
 
 .title img {

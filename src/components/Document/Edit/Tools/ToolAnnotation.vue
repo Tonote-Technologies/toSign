@@ -1,10 +1,11 @@
+<!-- eslint-disable vue/valid-v-model -->
 <!-- eslint-disable vue/no-mutating-props -->
 <template>
   <Vue3DraggableResizable v-if="tool.append_print == null" :key="tool.id" :initH="tool.tool_name == 'Photo' ? 100 : 30"
     :initW="Number(tool.tool_width)" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" v-model:x="x"
-    v-model:y="y" :parent="true"
-    :draggable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true" :resizable="false"
-    @drag-end="dragEnd($event, tool)" class="image-area" :class="tool.tool_class">
+    v-model:y="y" :parent="true" :draggable="
+      comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+    " :resizable="false" @drag-end="dragEnd($event, tool)" class="image-area" :class="tool.tool_class">
     <div class="h-100" :style="{
       outline:
         '2px solid ' +
@@ -34,25 +35,66 @@
     </template>
     <ParticipantName :userId="tool.user_id" @code="code" />
   </Vue3DraggableResizable>
-  <Vue3DraggableResizable v-else :initW="Number(tool.tool_width)" :initH="Number(tool.tool_height)"
-    :minW="tool.tool_name == 'Textarea' ? 62 : 95" :minH="30" :x="Number(tool.tool_pos_left)"
-    :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y" v-model:h="textHeight"
-    v-model:w="textWidth" @drag-end="dragEnd($event, tool)" @resize-end="resizeEnd(tool, toolWidth, toolHeight)"
-    :draggable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
-    :resizable="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true"
-    :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
-    :lockAspectRatio="['Seal', 'Stamp'].includes(tool.tool_name) ? true : false" :handles="['tl', 'tr', 'bl', 'br']"
-    class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
-    class-name-resizing="resizing-class">
-    <textarea v-if="tool.tool_name == 'Textarea'" v-model="textValue" class="textareaTool w-100 h-100"
-      @blur="textInput($event.target, tool)" placeholder="Input text here" :style="{
-        '--placeholder-color':
-          (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
-            ? '#28C76F'
-            : hex.code,
-      }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false"></textarea>
+  <template v-else>
+    <Vue3DraggableResizable v-if="tool.tool_name == 'Textarea'" :initW="Number(tool.tool_width)"
+      :initH="Number(tool.tool_height)" :minW="63" :minH="25" :x="Number(tool.tool_pos_left)"
+      :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y" v-model:w="textWidth"
+      v-model:h="textHeight" @drag-end="dragEnd($event, tool)" @resize-end="resizeEnd($event, tool)" :draggable="
+        comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+      " :resizable="
+  comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+" :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
+      :lockAspectRatio="['Seal', 'Stamp'].includes(tool.tool_name) ? true : false" :handles="['tl', 'tr', 'bl', 'br']"
+      class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
+      class-name-resizing="resizing-class">
+      <textarea v-model="textValue" class="textareaTool w-100 h-100" :class="{ 'tool-border': activatedTool }"
+        @blur="textInput($event.target, tool)" placeholder="Text" :style="{
+          '--placeholder-color':
+            (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
+              ? '#28C76F'
+              : hex.code,
+        }" :disabled="comp == 'audit' ? true : tool.user_id != profile.id ? true : false"></textarea>
 
-    <template v-else>
+    <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="textValue" class="textareaTool w-100 h-100"
+        @blur="textInput($event.target, tool)" placeholder="Input text here" :style="{
+          '--placeholder-color':
+            (owner.isOwner && profile.id == tool.user_id) || owner.name.includes(hex.name)
+              ? '#28C76F'
+                          : hex.code,
+                    }" :disabled="tool.user_id != profile.id ? true : false" /> -->
+
+      <template v-if="
+        comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+      ">
+        <span class="drag-me">
+          <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
+            <MoveIcon />
+          </span>
+
+          <span v-if="tool.tool_name != 'Textarea'" title="Edit" class="btn btn-xs btn-secondary rounded-0 edit"
+            @click="getUserId(tool)">
+            <EditIcon />
+          </span>
+
+          <span title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
+            @click="remove({ printId: tool.append_print.id, toolId: tool.id })" :data-id="tool.id">
+            <DeleteIcon />
+          </span>
+        </span>
+      </template>
+      <ParticipantName :userId="tool.user_id" @code="code" />
+    </Vue3DraggableResizable>
+    <Vue3DraggableResizable v-else :initW="Number(tool.tool_width)" :initH="Number(tool.tool_height)" :minW="95"
+      :minH="30" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y"
+      v-model:w="tool.tool_width" v-model:h="tool.tool_height" @drag-end="dragEnd($event, tool)"
+      @resize-end="resizeEnd($event, tool)" :draggable="
+        comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+      " :resizable="
+  comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+" :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
+      :lockAspectRatio="['Seal', 'Stamp'].includes(tool.tool_name) ? true : false" :handles="['tl', 'tr', 'bl', 'br']"
+      class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
+      class-name-resizing="resizing-class">
       <div class="grid" v-if="isToolLoading.id == tool.id && isToolLoading.active">
         <span class="spinner-border" role="status"></span>
       </div>
@@ -61,30 +103,32 @@
           ? 'object-fit: scale-down'
           : '',
       ]" />
-    </template>
 
-    <template v-if="comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true">
-      <span class="drag-me">
-        <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
-          <MoveIcon />
-        </span>
+      <template v-if="
+        comp == 'audit' ? false : profile.id == tool.user_id || owner.isOwner == true
+      ">
+        <span class="drag-me">
+          <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
+            <MoveIcon />
+          </span>
 
-        <span v-if="tool.tool_name != 'Textarea'" title="Edit" class="btn btn-xs btn-secondary rounded-0 edit"
-          @click="getUserId(tool)">
-          <EditIcon />
-        </span>
+          <span v-if="tool.tool_name != 'Textarea'" title="Edit" class="btn btn-xs btn-secondary rounded-0 edit"
+            @click="getUserId(tool)">
+            <EditIcon />
+          </span>
 
-        <span title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
-          @click="remove({ printId: tool.append_print.id, toolId: tool.id })" :data-id="tool.id">
-          <DeleteIcon />
+          <span title="Remove" class="btn btn-xs btn-secondary rounded-0 remove"
+            @click="remove({ printId: tool.append_print.id, toolId: tool.id })" :data-id="tool.id">
+            <DeleteIcon />
+          </span>
         </span>
-      </span>
-    </template>
-    <ParticipantName :userId="tool.user_id" @code="code" />
-  </Vue3DraggableResizable>
+      </template>
+      <ParticipantName :userId="tool.user_id" @code="code" />
+    </Vue3DraggableResizable>
+  </template>
 
   <Teleport to="body">
-    <ModalComp :show="affixModal" :footer="false" :size="'modal-md'" @close="affixModal = false">
+    <ModalComp :show="affixModal" :footer="false" :size="'modal-lg'" @close="affixModal = false">
       <template #header>
         <h4 class="modal-title">Signature box</h4>
       </template>
@@ -132,7 +176,7 @@
   </Teleport>
 
   <Teleport to="body">
-    <ModalComp :show="uploadImage" :footer="false" :size="'modal-md'" @close="uploadImage = false">
+    <ModalComp :show="uploadImage" :footer="false" :size="'modal-lg'" @close="uploadImage = false">
       <template #header>
         <h4 class="modal-title">Image management</h4>
       </template>
@@ -174,12 +218,12 @@ const { profile, isToolLoading } = useGetters({
   isToolLoading: "document/isToolLoading",
 });
 
+const hex = ref("");
+const code = (params) => (hex.value = params);
+
 const { editTools } = useActions({
   editTools: "document/editTools",
 });
-
-const hex = ref("");
-const code = (params) => (hex.value = params);
 
 const toolWidth = ref(0);
 const toolHeight = ref(0);
@@ -188,8 +232,8 @@ watch(
   () => props.tool,
   (newTool, oldTool) => {
     if (newTool != oldTool) {
-      toolWidth.value = Number(newTool.tool_width);
-      toolHeight.value = Number(newTool.tool_height);
+      textWidth.value = toolWidth.value = Number(newTool.tool_width);
+      textHeight.value = toolHeight.value = Number(newTool.tool_height);
       if (newTool.append_print != null) {
         toBase64(newTool.append_print.file, (dataUrl) => {
           if (dataUrl != "") {
@@ -214,7 +258,7 @@ const uploadImage = ref(false);
 const toolId = ref(null);
 
 const getUserId = (params) => {
-  if (props.comp == 'audit') return;
+  if (props.comp == "audit") return;
   const toaster = (message) => {
     toast.error(message, {
       timeout: 5000,
@@ -242,7 +286,10 @@ const getUserId = (params) => {
   toolId.value = params.id;
 };
 
-const textValue = (props.tool.append_print?.value != '' ? props.tool.append_print?.value : '')
+const textValue = ref(
+  props.tool.append_print != null ? props.tool.append_print.value : ""
+);
+const textHeight = ref(25);
 const textInput = (e, params) => {
   const data = {
     append_print_id: params.append_print.id,
@@ -266,56 +313,69 @@ const remove = (params) => {
   emit("remove", params);
 };
 
-const textWidth = ref(62)
-const textHeight = ref(0)
+const textWidth = ref(63);
 const autoResize = {
   minWidth: 62,
   maxWidth: 600,
-  buffer: 0,
-
-  calcHeight: function (value) {
-    let numberOfLineBreaks = (value.match(/\n/g) || []).length;
-    // min-height + lines x line-height + padding + border
-    let newHeight = 20 + numberOfLineBreaks * 20 + 12 + 2;
-    return newHeight;
-  },
+  buffer: 20,
 
   resize: function (el) {
-    const test = document.createElement('pre');
-    test.className = 'input-test';
+    const test = document.createElement("pre");
+    test.className = "input-test";
     test.innerHTML = el.value;
     el.parentNode.appendChild(test);
-    const calculatedWidth = Math.min(Math.max(test.offsetWidth + this.buffer, this.minWidth), this.maxWidth)
-    el.parentElement.style.width = calculatedWidth + 'px';
-    textWidth.value = calculatedWidth
+
+    let numberOfLineBreaks = (el.value.match(/\n/g) || []).length;
+    // min - height + lines x line - height + padding + border
+    let newHeight = 10 + numberOfLineBreaks * 20 + 12 + 2;
+
+    const calculatedWidth = Math.min(
+      Math.max(test.offsetWidth + this.buffer, this.minWidth),
+      this.maxWidth
+    );
+
+    el.parentElement.style.width = calculatedWidth + "px";
+    textWidth.value = calculatedWidth;
+
+    const calculatedHeight = calculatedWidth < 600 ? newHeight : el.scrollHeight;
+    el.parentElement.style.height = calculatedHeight + "px";
+    textHeight.value = calculatedHeight;
+
     el.parentNode.removeChild(test);
   },
 
   init: function () {
-    let els = document.getElementsByClassName('textareaTool'),
+    let els = document.getElementsByClassName("textareaTool"),
       i = els.length;
 
     while (i--) {
-      els[i].addEventListener('keydown', function () {
-        autoResize.resize(this);
-      }, false);
+      els[i].addEventListener(
+        "keydown",
+        function () {
+          autoResize.resize(this);
+        },
+        false
+      );
 
-      els[i].addEventListener('keyup', function () {
-        autoResize.resize(this);
-        const finalHeight = this.maxWidth < 600 ? autoResize.calcHeight(this.value) : this.scrollHeight
-        this.parentElement.style.height = finalHeight + "px";
-        textHeight.value = finalHeight
-      }, false);
+      els[i].addEventListener(
+        "keyup",
+        function () {
+          autoResize.resize(this);
+        },
+        false
+      );
 
       this.resize(els[i]);
     }
-  }
+  },
 };
 
 onMounted(() => {
   autoResize.init();
 
   if (props.tool.append_print != null) {
+    textWidth.value = Number(props.tool.tool_width);
+    textHeight.value = Number(props.tool.tool_height);
     toBase64(props.tool.append_print.file, (dataUrl) => {
       if (dataUrl != "") {
         b64.value = dataUrl;
