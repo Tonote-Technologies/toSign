@@ -86,24 +86,26 @@
               </a>
             </li>
 
-            <li>
-              <a class="d-flex align-items-center" :href="redirectToSignLink + '?status=sign&qt=' + token">
-                <LinkIcon />
-                <span class="menu-item text-truncate">Sign link</span>
-                <p title="Coming Soon" class="coming-soon badge rounded-pill badge-light-warning">
-                  Coming Soon
-                </p>
-              </a>
-              <!-- <a class="d-flex align-items-center" :href="redirectToSignLink + '?status=sign&qt=' + token">
+            <!-- <li> -->
+
+            <!-- <a class="d-flex align-items-center" :href="redirectToSignLink + '?status=sign&qt=' + token">
                 <LinkIcon />
                 <span class="menu-item text-truncate">Sign link</span>
                 <p title="Coming Soon" class="coming-soon badge rounded-pill badge-light-warning">
                   Coming Soon
                 </p>
               </a> -->
-            </li>
+            <!-- </li> -->
           </ul>
         </li>
+
+        <button class="d-flex align-items-center btn ms-1" disabled>
+          <LinkIcon />
+          <span class="menu-item text-truncate">Sign link</span>
+          <p title="Coming Soon" class="coming-soon badge rounded-pill badge-light-warning">
+            Coming Soon
+          </p>
+        </button>
 
         <li class="nav-item d-none">
           <a class="d-flex align-items-center" href="#!">
