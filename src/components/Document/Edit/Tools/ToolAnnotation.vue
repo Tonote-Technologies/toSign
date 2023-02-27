@@ -307,7 +307,7 @@ const remove = (params) => {
 
 const textWidth = ref(63);
 const autoResize = {
-  minWidth: 62,
+  minWidth: 63,
   maxWidth: 600,
   buffer: 20,
 
