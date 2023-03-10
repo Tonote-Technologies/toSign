@@ -120,7 +120,7 @@
   </template>
 
   <Teleport to="body">
-    <ModalComp :show="affixModal" :footer="false" :size="'modal-lg'" @close="affixModal = false">
+    <ModalComp :show="affixModal" :footer="false" :size="'modal-md'" @close="affixModal = false">
       <template #header>
         <h4 class="modal-title">Signature box</h4>
       </template>
@@ -168,13 +168,14 @@
   </Teleport>
 
   <Teleport to="body">
-    <ModalComp :show="uploadImage" :footer="false" :size="'modal-lg'" @close="uploadImage = false">
+    <ModalComp :show="uploadImage" :footer="false" :size="'modal-md'" @close="uploadImage = false">
       <template #header>
         <h4 class="modal-title">Image management</h4>
       </template>
 
       <template #body>
-        <PassportPhotograph @close="uploadImage = false" @selectedPassport="savePrint" />
+        <PassportPhotograph @closeInitialModal="closeUploadImage" @close="uploadImage = false"
+          @selectedPassport="savePrint" />
       </template>
     </ModalComp>
   </Teleport>
@@ -216,6 +217,13 @@ const code = (params) => (hex.value = params);
 const { editTools } = useActions({
   editTools: "document/editTools",
 });
+
+const closeUploadImage = () => {
+  uploadImage.value = false
+  setTimeout(() => {
+    uploadImage.value = true
+  }, 200);
+}
 
 const toolWidth = ref(0);
 const toolHeight = ref(0);

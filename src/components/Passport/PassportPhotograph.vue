@@ -1,31 +1,5 @@
 <template>
-  <div v-if="appendPass === true">
-    <div class="d-flex justify-content-between align-items-center flex-column mt-2" style="height: 35vh">
-      <div class="grid grid__3">
-        <label v-for="(photo, index) in prints.Photograph" :key="index" class="form-check-label border" :for="photo.id">
-          <div @click="getPrintId({ category: 'Upload', print_id: photo.id })">
-            <template v-if="photo.user_id">
-              <div class="position-relative">
-                <input type="radio" name="photo" v-model="selected" class="form-check-input tool_name" :id="photo.id"
-                  :value="photo.id" />
-                <img :src="photo.file" class="img-fluid" :alt="photo.id" />
-              </div>
-            </template>
-          </div>
-        </label>
-      </div>
-
-      <div class="modal-footer w-100">
-        <button class="btn btn-secondary" @click="appendPass = false">close</button>
-        <button type="button" class="btn btn-primary d-block ms-auto" :class="{ disabled: !isSelected }"
-          @click="affixPassport">
-          <span v-show="isLoading" class="spinner-border spinner-border-sm"></span>
-          <span>Append</span>
-        </button>
-      </div>
-    </div>
-  </div>
-  <div v-else>
+  <div>
     <TopTabWrapper>
       <TopTabList title="Select">
         <div class="d-flex justify-content-between align-items-center flex-column" style="min-height: 18rem">
@@ -161,7 +135,6 @@ const dropzoneFile = ref("");
 const preview = ref(null);
 const fileValidated = ref("");
 const isSelected = ref(false);
-const appendPass = ref(false);
 const isUpload = ref(false);
 const isLoading = ref(false);
 const loading = ref(false);
@@ -239,7 +212,7 @@ const uploadPhotograph = () => {
 
   setTimeout(() => {
     loading.value = false;
-    appendPass.value = true;
+    emit("closeInitialModal", true);
   }, 1000);
 };
 

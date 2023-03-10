@@ -5,18 +5,19 @@ const toast = useToast();
 
 export const clearStore = ({ commit }) => {
   commit("SET_TOKEN", null);
-  window.localStorage.removeItem('vuex');
+  window.localStorage.removeItem(JSON.stringify('vuex'));
 };
 
 export const logoutUser = ({ commit }, formData) => {
   User.logout(formData)
     .then(() => {
       window.sessionStorage.removeItem('token');
-      window.localStorage.removeItem('vuex');
+      window.localStorage.removeItem(JSON.stringify('vuex'));
 
       if (process.env.NODE_ENV == 'development') {
         router.push({ name: "Login" });
       } else {
+        // window.location.href = process.env.VUE_APP_URL_AUTH_LIVE + "/redirecting?action=logout"
         window.location.href = process.env.VUE_APP_URL_AUTH_LIVE;
       }
     })

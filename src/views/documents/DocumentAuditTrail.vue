@@ -6,7 +6,8 @@
     <div class="card p-2">
       <div class="d-flex justify-content-between align-items-center">
         <div class="m-0">
-          <router-link :to="{ name: 'Dashboard' }" class="btn btn-sm btn-secondary me-1">
+          <router-link :to="{ name: 'Dashboard', query: { status: theDoc.status } }"
+            class="btn btn-sm btn-secondary me-1">
             &larr; Go back <span class="d-none d-lg-inline-block">to documents</span>
           </router-link>
           <router-link v-if="
@@ -31,7 +32,8 @@
               <span class="d-none d-md-block">Download</span>
             </template>
           </button>
-          <button class="btn btn-sm btn-primary ms-auto" @click="finishModal = true">
+          <button v-if="theDoc.status != '' && theDoc.status != 'Completed'" class="btn btn-sm btn-primary ms-auto"
+            @click="finishModal = true">
             Finish
           </button>
         </div>
@@ -111,7 +113,7 @@
         </div>
       </div>
 
-      <div class="col-lg-4">
+      <div v-if="env" class="col-lg-4">
         <div class="card scrollable">
           <div class="card-header">
             <h4 class="card-title">Audit Trail</h4>
@@ -179,7 +181,7 @@
         Confirm
       </button>
     </template>
-</ModalComp>
+  </ModalComp>
 </template>
 
 <script setup>
@@ -311,9 +313,9 @@ const exportHTMLToPDF = async (params) => {
   const opt = {
     margin: [0, 0, -2, 0],
     filename: userDocument.value.title,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { dpi: 192, letterRendering: true },
-    jsPDF: { unit: "in", format: "letter", orientation: "portrait", compressPDF: true },
+    image: { type: 'jpeg', quality: 1 },
+    html2canvas: { dpi: 198, letterRendering: true, useCORS: true },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compressPDF: true }
   };
 
   const doc = new jsPDF(opt.jsPDF);
@@ -370,20 +372,15 @@ const isDoneEdit = () => {
   doneEditing(dataObj);
 };
 
-// const confirmEdit = () => {
-//   if (!userDocument.value.is_the_owner_of_document) {
-//     exportHTMLToPDF('done');
-//   } else {
-//     window.location.href = redirectToUserDashboard.value + '/redirecting?qt=' + token.value;
-//   }
-// };
-
 const files = ref([]);
 const sortedFile = ref("");
 
 function sortedDocumentUploads(params) {
   params.documentUploads?.filter((item) => {
     if (item.status == 'Processing' && item.number_ordering != null) {
+      files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
+    }
+    if (item.status == 'Processed' && item.number_ordering != null) {
       files.value.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
     }
     if (item.status == 'Processing' && item.created_at.includes('2022')) {
@@ -394,7 +391,10 @@ function sortedDocumentUploads(params) {
   sortedFile.value = files.value.sort((a, b) => (a.number > b.number ? 1 : -1));
 }
 
+const env = ref(false)
 onMounted(() => {
+  env.value = process.env.NODE_ENV == 'development' ? true : false;
+
   uri.value = route.currentRoute.value.params.document_id;
   getUserDocument(uri.value);
   getAuditTrail(uri.value);
